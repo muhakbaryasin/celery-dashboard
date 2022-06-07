@@ -1,22 +1,23 @@
 from .celery import app
 from models.news.JawaPos import JawaPos, JawaPosNasional, JawaPosFinance, JawaPosBisnis
+from time import sleep
 
 
 @app.task()
 def task1():
-    JawaPos().next()
+    sleep(10)
 
 
 @app.task()
 def task2():
-    JawaPosNasional().next()
+    sleep(20)
 
 
 @app.task()
 def task3():
-    JawaPosFinance().next()
+    sleep(30)
 
 
 @app.task()
 def task4():
-    JawaPosBisnis().next()
+    sleep(35)

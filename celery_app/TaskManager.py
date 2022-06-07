@@ -1,10 +1,13 @@
 from time import sleep
 from datetime import date
 from celery_app.tasks import task1, task2, task3, task4
+from models.xmlsettings import XMLSettings
 
 
 class TaskManager(object):
     __instance = None
+    task_list = None
+    max_concurrent_task = None
 
     def __new__(cls, *args):
         if cls.__instance is None:
@@ -14,22 +17,43 @@ class TaskManager(object):
     def get_task_list(self):
         return self.task_list
 
+    def get_max_concurrent_task(self):
+        return int(self.get_config().get('max-concurrent-task', 2))
+
+    @staticmethod
+    def get_config():
+        return XMLSettings('conf_xml/TaskManager.xml')
+
+    def set_max_concurrent_task(self, max_concurrent_task):
+        if max_concurrent_task > 4:
+            raise Exception('{} is over the max allowed concurrent task which is 4'.format(max_concurrent_task))
+
+        config = self.get_config()
+        config.put('max-concurrent-task', max_concurrent_task)
+        config.save()
+
     @staticmethod
     def write_running_task_log(task_list):
         with open('taskmanager.log', 'w') as f:
             f.write(str(task_list))
 
     def __init__(self):
-        self.task_list = [
-            {"name": task1.__name__, "res": None, "day": None, "func": task1},
-            {"name": task2.__name__, "res": None, "day": None, "func": task2},
-            {"name": task3.__name__, "res": None, "day": None, "func": task3},
-            {"name": task4.__name__, "res": None, "day": None, "func": task4},
-        ]
+        config = self.get_config()
+
+        if self.task_list is None:
+            self.task_list = [
+                {"name": task1.__name__, "res": None, "day": None, "func": task1},
+                {"name": task2.__name__, "res": None, "day": None, "func": task2},
+                {"name": task3.__name__, "res": None, "day": None, "func": task3},
+                {"name": task4.__name__, "res": None, "day": None, "func": task4},
+            ]
+
+        self.max_concurrent_task = self.get_max_concurrent_task()
+        config.put('max-concurrent-task', self.max_concurrent_task)
+        config.save()
 
     def run(self):
         running_task = []
-        max_running_task = 2
         tasks_num = len(self.task_list)
         task_id = 0
         next_p_task_id = None
@@ -46,7 +70,7 @@ class TaskManager(object):
             each_task = self.task_list[task_id]
             each_task['task_id'] = task_id
 
-            if len(running_task) >= max_running_task:
+            if len(running_task) >= self.get_max_concurrent_task():
                 sleep(1)
                 continue
 

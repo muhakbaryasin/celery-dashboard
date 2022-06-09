@@ -61,13 +61,15 @@
       </div>
     </div>
     <script>
+      let base_url = window.location.origin;
+
       $("#select_max_concurrent_task").on('change', function() {
         update_max_concurrent(this.value)
       });
 
       function update_max_concurrent(number) {
         $.ajax({
-           url: "http://127.0.0.1:5002/v1/ctask/max-concurrent/" + parseInt(number),
+           url: base_url + "/v1/ctask/max-concurrent/" + parseInt(number),
            type: 'PUT',
            success: function(data) {
             alert("Max concurrent task is set to " + data.data)
@@ -76,7 +78,7 @@
       }
 
       function get_max_concurrent() {
-        $.get( "http://127.0.0.1:5002/v1/ctask/max-concurrent", function( data ) {
+        $.get( base_url + "/v1/ctask/max-concurrent", function( data ) {
           $("#select_max_concurrent_task").val(data.data);
         })
       }
@@ -91,7 +93,7 @@
       }
 
       function loadMore() {
-            $.get( "http://127.0.0.1:5002/v1/ctask", function( data ) {
+            $.get(base_url + "/v1/ctask", function( data ) {
                 let keys = Object.keys(data.data);
                 for (let i = 0; i < keys.length; i++) {
                     let el = document.getElementById("result");

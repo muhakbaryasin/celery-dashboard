@@ -1,6 +1,6 @@
 from time import sleep
 from datetime import date
-from celery_app.tasks import task1, task2, task3, task4
+from celery_app.tasks import task1, task2, task3, task4, task5
 from models.xmlsettings import XMLSettings
 
 
@@ -17,18 +17,20 @@ class TaskManager(object):
     def get_task_list(self):
         return self.task_list
 
-    def get_max_concurrent_task(self):
-        return int(self.get_config().get('max-concurrent-task', 2))
+    @staticmethod
+    def get_max_concurrent_task():
+        return int(TaskManager.get_config().get('max-concurrent-task', 2))
 
     @staticmethod
     def get_config():
         return XMLSettings('conf_xml/TaskManager.xml')
 
-    def set_max_concurrent_task(self, max_concurrent_task):
+    @staticmethod
+    def set_max_concurrent_task(max_concurrent_task):
         if max_concurrent_task > 4:
             raise Exception('{} is over the max allowed concurrent task which is 4'.format(max_concurrent_task))
 
-        config = self.get_config()
+        config = TaskManager.get_config()
         config.put('max-concurrent-task', max_concurrent_task)
         config.save()
 
@@ -46,6 +48,7 @@ class TaskManager(object):
                 {"name": task2.__name__, "res": None, "day": None, "func": task2},
                 {"name": task3.__name__, "res": None, "day": None, "func": task3},
                 {"name": task4.__name__, "res": None, "day": None, "func": task4},
+                {"name": task5.__name__, "res": None, "day": None, "func": task5},
             ]
 
         self.max_concurrent_task = self.get_max_concurrent_task()
@@ -62,8 +65,8 @@ class TaskManager(object):
         while True:
             for each_task in self.task_list:
                 if each_task['res'] is not None \
-                        and (each_task['res'].state == "SUCCESS" or each_task['res'].state == "FAILURE" or each_task['res'].state == "REVOKED") \
-                        and each_task['name'] in running_task:
+                        and (each_task['res'].state == "SUCCESS" or each_task['res'].state == "FAILURE" or
+                             each_task['res'].state == "REVOKED") and each_task['name'] in running_task:
                     running_task.remove(each_task['name'])
                     each_task['res'] = None
 
@@ -102,4 +105,3 @@ class TaskManager(object):
 
                 self.write_running_task_log(running_task)
                 sleep(1)
-

@@ -56,6 +56,9 @@ def login():
 
 @blueprint.route('/register', methods=['GET', 'POST'])
 def register():
+    if request.host != 'localhost:5002' and request.host != '127.0.0.1:5002':
+        return not_found_error('You cant go here')
+
     create_account_form = CreateAccountForm(request.form)
     if 'register' in request.form:
 

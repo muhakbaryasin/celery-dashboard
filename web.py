@@ -20,5 +20,10 @@ except KeyError:
 app = create_app(app_config)
 Migrate(app, db)
 
+if DEBUG:
+    app.logger.debug('DEBUG       = ' + str(DEBUG))
+    app.logger.debug('Environment = ' + get_config_mode)
+    app.logger.debug('DBMS        = ' + app_config.SQLALCHEMY_DATABASE_URI)
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5002, debug=True)
+    app.run(host='0.0.0.0', port=5002, debug=DEBUG)

@@ -46,10 +46,9 @@
                 <tr>
                   <th scope="col" class="sort" data-sort="name">No.</th>
                   <th scope="col" class="sort" data-sort="name">Name</th>
-                  <th scope="col" class="sort" data-sort="id">Latest ID</th>
-                  <th scope="col" class="sort" data-sort="latest_started">Latest Started</th>
                   <th scope="col" class="sort" data-sort="latest_status">Latest Status</th>
-                  <th scope="col" class="sort" data-sort="runtime_average">Runtime (Average)</th>
+                  <th scope="col" class="sort" data-sort="latest_started">Latest Started</th>
+                  <th scope="col" class="sort" data-sort="runtime_average">Runtime (Avg. Sec.)</th>
                   <th scope="col" class="sort" data-sort="executed_times">Executed (Times)</th>
                 </tr>
               </thead>
@@ -96,6 +95,9 @@
             $.get(base_url + "/v1/ctask", function( data ) {
                 let keys = Object.keys(data.data);
                 for (let i = 0; i < keys.length; i++) {
+                    if (keys[i] === "null")
+                      continue
+
                     let el = document.getElementById("result");
                       el.innerHTML = el.innerHTML +
 `
@@ -114,20 +116,17 @@ function(){
       </div>
     </div>
   </th>
-  <td class="budget">
-    `+ data.data[keys[i]].latest_id + `
-  </td>
-  <td>
-    `+ data.data[keys[i]].latest_started +`
-  </td>
   <td>
     <span class="badge badge-dot mr-4">
       <i class="`+ getBg(data.data[keys[i]].latest_status) +`"></i>
-      <span class="status">`+ data.data[keys[i]].latest_status +`</span>
+      <span class="status">`+ (data.data[keys[i]].latest_status ? data.data[keys[i]].latest_status : "-------------") +`</span>
     </span>
   </td>
   <td>
-    `+ data.data[keys[i]].runtime_average +`
+    `+ (data.data[keys[i]].latest_started ? new Date(data.data[keys[i]].latest_started * 1000) : "-----------------") +`
+  </td>
+  <td>
+    `+ data.data[keys[i]].runtime_average.toFixed(3) +`
   </td>
   <td>
     `+ data.data[keys[i]].executed_times +`

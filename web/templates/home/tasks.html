@@ -113,7 +113,6 @@
       function get_app() {
         $('#loader').show();
         $.get( base_url + "/v1/capps", function( data ) {
-          $('#loader').hide();
           var select_el = document.getElementById('select_app');
           var inner = ``;
           for (var i=0; i<data.data.length; i++) {
@@ -140,7 +139,6 @@
       function get_max_concurrent() {
         $('#loader').show();
         $.get( base_url + "/v1/ctask/"+app_name+"/max-concurrent", function( data ) {
-          $('#loader').hide();
           $("#select_max_concurrent_task").val(data.data);
         })
       }

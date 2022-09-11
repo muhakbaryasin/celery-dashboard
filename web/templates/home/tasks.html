@@ -23,7 +23,7 @@
       </div>
     </div>
   </div>
-  
+
   <!-- Page content -->
   <div class="container-fluid mt--6">
     <!-- Dark table -->
@@ -48,9 +48,9 @@
             <table class="table align-items-center table-dark table-flush">
               <thead class="thead-dark">
                 <tr>
-                  <th scope="col" class="sort" data-sort="name">No.</th>
-                  <th scope="col" class="sort" data-sort="name">Name</th>
-                  <th scope="col" class="sort" data-sort="latest_status">Latest Status</th>
+                  <th scope="col" class="sort" data-sort="no">No.</th>
+                  <th scope="col" class="sort" data-sort="name" style="cursor: pointer;" onclick="sortBy('name')">Name</th>
+                  <th scope="col" class="sort" data-sort="latest_status" style="cursor: pointer;" onclick="sortBy('latest_status')">Latest Status</th>
                   <th scope="col" class="sort" data-sort="latest_started">Latest Started</th>
                   <th scope="col" class="sort" data-sort="runtime_average">Runtime (Avg. Sec.)</th>
                   <th scope="col" class="sort" data-sort="executed_times">Executed (Times)</th>
@@ -66,6 +66,25 @@
     <script>
       let base_url = window.location.origin;
       let app_name = localStorage.getItem("app_name") ? localStorage.getItem("app_name") : "indonesia";
+      let sort_by = localStorage.getItem("sort_by") ? localStorage.getItem("sort_by") : "";
+      let is_desc = localStorage.getItem("is_desc") ? localStorage.getItem("is_desc") : "";
+
+      function sortBy(name) {
+        if (name === 'name')
+            name = ""
+
+        if (name === sort_by) {
+          if (is_desc == true)
+            is_desc = false
+          else is_desc = true
+
+          localStorage.setItem("is_desc", is_desc);
+        } else {
+          sort_by = name
+          localStorage.setItem("sort_by", sort_by);
+        }
+        loadMore();
+      };
 
       $("#select_app").on('change', function() {
         update_select_app(this.value)
@@ -116,14 +135,16 @@
       }
 
       function loadMore() {
-            $.get(base_url + "/v1/ctask/"+app_name, function( data ) {
-                let keys = Object.keys(data.data);
-                for (let i = 0; i < keys.length; i++) {
-                    if (keys[i] === "null")
-                      continue
+        let el = document.getElementById("result");
+        el.innerHTML = '';
+        $.get(base_url + "/v1/ctask/"+app_name+"?sort_by=" + sort_by + "&is_desc="+is_desc, function( data ) {
+            let keys = Object.keys(data.data);
 
-                    let el = document.getElementById("result");
-                      el.innerHTML = el.innerHTML +
+            for (let i = 0; i < keys.length; i++) {
+              if (keys[i] === "null")
+                continue
+
+              el.innerHTML = el.innerHTML +
 `
 <tr onMouseOver="this.style.background='#26477e'" onMouseOut="this.style.background='#172b4d'">
   <td>
@@ -208,5 +229,5 @@ function(){
 
 {% endblock content %}
 
-<!-- Specific JS goes HERE --> 
+<!-- Specific JS goes HERE -->
 {% block javascripts %}{% endblock javascripts %}

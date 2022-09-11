@@ -1,3 +1,4 @@
+from flask import request
 from flask_restful import Resource
 from web.api.BaseResponse import BaseResponse
 from models.FlowerClient import FlowerClient
@@ -5,6 +6,16 @@ from models.FlowerClient import FlowerClient
 
 class CTask(Resource):
     def get(self, client_name):
+        if request.args.get('sort_by') is not None and request.args.get('sort_by') != '':
+            sort_by = request.args.get('sort_by')
+        else:
+            sort_by = None
+
+        is_descending = False
+
+        if request.args.get('is_desc') is not None and request.args.get('is_desc') != '':
+            is_descending = True if request.args.get('is_desc').lower() == 'true' else False
+
         flower_client = FlowerClient(client_name)
         response = BaseResponse()
         response.status = "ok"
@@ -48,5 +59,10 @@ class CTask(Resource):
                 sorted_tasks[task_history[key]['name']]['latest_status'] = task_history[key]['state']
 
         response.data = sorted_tasks
+
+        if sort_by is not None:
+            response.data = dict(sorted(sorted_tasks.items(),
+                                        key=lambda kv: kv[1][sort_by] if kv[1][sort_by] is not None else '',
+                                        reverse=is_descending))
 
         return response.__dict__

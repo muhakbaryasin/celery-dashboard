@@ -3,6 +3,21 @@
 {% block title %} Tasks {% endblock title %}
 
 {% block content %}
+  <style>
+    .loader {
+  border: 3px solid #f3f3f3; /* Light grey */
+  border-top: 3px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+  </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
   <div class="header bg-primary pb-6">
@@ -43,6 +58,7 @@
               <option value="3">3</option>
               <option value="4">4</option>
             </select>
+            <div id="loader" style="float: right;" class="loader"></div>
           </div>
           <div class="table-responsive">
             <table class="table align-items-center table-dark table-flush">
@@ -95,7 +111,9 @@
       });
 
       function get_app() {
+        $('#loader').show();
         $.get( base_url + "/v1/capps", function( data ) {
+          $('#loader').hide();
           var select_el = document.getElementById('select_app');
           var inner = ``;
           for (var i=0; i<data.data.length; i++) {
@@ -120,7 +138,9 @@
       }
 
       function get_max_concurrent() {
+        $('#loader').show();
         $.get( base_url + "/v1/ctask/"+app_name+"/max-concurrent", function( data ) {
+          $('#loader').hide();
           $("#select_max_concurrent_task").val(data.data);
         })
       }
@@ -135,9 +155,10 @@
       }
 
       function loadMore() {
-        let el = document.getElementById("result");
-        el.innerHTML = '';
+        $('#loader').show();
         $.get(base_url + "/v1/ctask/"+app_name+"?sort_by=" + sort_by + "&is_desc="+is_desc, function( data ) {
+            let el = document.getElementById("result");
+            el.innerHTML = '';
             let keys = Object.keys(data.data);
 
             for (let i = 0; i < keys.length; i++) {
@@ -193,6 +214,7 @@ function(){
 </tr>
 `
 					}
+				$('#loader').hide();
 				});
 			}
 

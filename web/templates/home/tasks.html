@@ -122,16 +122,19 @@
         })
       }
 
-      function update_select_app(app_name) {
-        localStorage.setItem("app_name", app_name);
+      function update_select_app(app_name_) {
+        localStorage.setItem("app_name", app_name_);
+        app_name = app_name_;
       }
 
       function update_max_concurrent(number) {
+        $('#loader').show();
         $.ajax({
            url: base_url + "/v1/ctask/"+app_name+"/max-concurrent/" + parseInt(number),
            type: 'PUT',
            success: function(data) {
             alert("Max concurrent task is set to " + data.data)
+            $('#loader').hide();
            }
           });
       }

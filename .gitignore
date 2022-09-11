@@ -1,0 +1,20 @@
+env
+.vscode
+.env
+package-lock.json
+node_modules
+scraping_data*/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# pycache
+*.pyc
+
+*conf.xml
+
+#ignore log file
+*.log
+
+.idea

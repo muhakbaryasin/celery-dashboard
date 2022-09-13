@@ -1,6 +1,7 @@
 import json
 import urllib.parse
 from models.Scraper import Scraper
+from models.ClientConfigManager import ClientConfigManager
 
 
 class FlowerClient(object):
@@ -9,8 +10,7 @@ class FlowerClient(object):
 
     @property
     def api_base_url(self):
-        with open('flower_apis.json', 'r') as f:
-            return json.loads(f.read())[self.client_name]['url']
+        return ClientConfigManager(self.client_name).api_base_url
 
     def restart(self):
         endpoint_url = '/api/worker/pool/restart/celery@worker1'

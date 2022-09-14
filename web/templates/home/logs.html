@@ -45,6 +45,7 @@
     </div>
     <script>
       let base_url = window.location.origin;
+      let app_name = localStorage.getItem("app_name") ? localStorage.getItem("app_name") : "indonesia";
 
       function loadMore() {
             $.get(base_url + "/v1/ctask", function( data ) {
@@ -91,6 +92,11 @@ function(){
 					}
 				});
 			}
+
+	    function update_select_app(app_name_) {
+          localStorage.setItem("app_name", app_name_);
+          app_name = app_name_;
+        }
 
 		$(function() {
           loadMore();

@@ -1,5 +1,3 @@
-import pdb
-
 from db.prod.ProdNativeQuery import TempProdNativeQuery
 
 

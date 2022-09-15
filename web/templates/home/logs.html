@@ -32,13 +32,24 @@
         <div class="card bg-default shadow">
           <div class="card-header bg-transparent border-0">
             <h3 class="text-white mb-0">Logs</h3>
-            <label>Switch Log </label>
-            <select id="select_log_opt" style="width: 100px;">
-              <option value="1">celery.log</option>
-              <option value="2">app.log</option>
+            <br/>
+            <label>App: </label>
+            <select id="select_app" style="width: 130px;">
             </select>
-          </div>
-
+            <label>Files </label>
+            <select id="select_log_opt" style="width: 250px;">
+            </select>
+            <label>Tail? </label>
+            <input type="checkbox" id="is_tail" name="is_tail">
+            <span>Will refresh in <span id="tail_counter"></span> second(s)</span>
+            <br/>
+            <br/>
+            <button id="load_more_up">load more</button>
+            <textarea id="content" style="width: 100%; white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: scroll;" rows=51 disabled>
+            </textarea>
+            <button id="load_more_down">load more</button>
           </div>
         </div>
       </div>
@@ -46,62 +57,142 @@
     <script>
       let base_url = window.location.origin;
       let app_name = localStorage.getItem("app_name") ? localStorage.getItem("app_name") : "indonesia";
+      let file_index = localStorage.getItem("file_index") ? localStorage.getItem("file_index") : 0;
+      let tail_counter = 0;
+      let tail_counter_interval = null;
 
-      function loadMore() {
-            $.get(base_url + "/v1/ctask", function( data ) {
-                let keys = Object.keys(data.data);
-                for (let i = 0; i < keys.length; i++) {
-                    if (keys[i] === "null")
-                      continue
+      let line_top = 0;
+      let line_bottom = 0;
+      let total_lines = null;
+      let tail_interval = null;
 
-                    let el = document.getElementById("result");
-                      el.innerHTML = el.innerHTML +
-`
-<tr onMouseOver="this.style.background='#26477e'" onMouseOut="this.style.background='#172b4d'"
-onClick="(
-function(){
-  window.location.href = '/task-history.html?task_name=`+ keys[i] + `'
-})();">
-  <td>
-    `+ (i + 1) + `
-  </td>
-  <th scope="row">
-    <div class="media align-items-center">
-      <div class="media-body">
-        <span class="name mb-0 text-sm">`+ keys[i] + `</span>
-      </div>
-    </div>
-  </th>
-  <td>
-    <span class="badge badge-dot mr-4">
-      <i class="`+ getBg(data.data[keys[i]].latest_status) +`"></i>
-      <span class="status">`+ (data.data[keys[i]].latest_status ? data.data[keys[i]].latest_status : "-------------") +`</span>
-    </span>
-  </td>
-  <td>
-    `+ (data.data[keys[i]].latest_started ? new Date(data.data[keys[i]].latest_started * 1000) : "-----------------") +`
-  </td>
-  <td>
-    `+ data.data[keys[i]].runtime_average.toFixed(3) +`
-  </td>
-  <td>
-    `+ data.data[keys[i]].executed_times +`
-  </td>
-</tr>
-`
-					}
-				});
-			}
+      function get_app() {
+        $('#loader').show();
+        $.get( base_url + "/v1/capps", function( data ) {
+          var select_el = document.getElementById('select_app');
+          var inner = ``;
+          for (var i=0; i<data.data.length; i++) {
+            inner += `<option value="`+ data.data[i] +`">` + data.data[i] + `</option>`
+          }
+          select_el.innerHTML = inner;
+        })
+      }
 
-	    function update_select_app(app_name_) {
-          localStorage.setItem("app_name", app_name_);
-          app_name = app_name_;
+      function every_five() {
+        tail_counter = (tail_counter + 1) % 10;
+        var tail_counter_el = document.getElementById('tail_counter');
+        tail_counter_el.innerHTML = (10-tail_counter);
+      }
+
+      function get_content(line_num) {
+        $('#loader').show();
+        $.get( base_url + "/v1/logs/" + app_name + "/" + file_index + "/" + line_num, function( data ) {
+          tail_counter = 0;
+
+          if (tail_counter_interval) {
+            clearInterval(tail_counter_interval)
+           }
+
+          if (tail_is_selected())
+            tail_counter_interval = setInterval(every_five, 1000)
+
+          var select_el = document.getElementById('select_log_opt');
+          var inner = ``;
+          for (var i=0; i<data.data.list.length; i++) {
+            if (file_index == i)
+              inner += `<option selected="true" value="`+ i +`">` + data.data.list[i] + `</option>`
+            else
+              inner += `<option value="`+ i +`">` + data.data.list[i] + `</option>`
+          }
+
+          if (data.data.content) {
+            $('#content').val(data.data.content);
+          }
+
+        if (!line_num) {
+            if (data.data.total_lines > 50)
+              line_top = data.data.total_lines - 50;
+
+            line_bottom = data.data.total_lines;
+            total_lines = data.data.total_lines;
+          }
+
+          select_el.innerHTML = inner;
+
+          $('#loader').hide();
+        })
+      }
+
+      function update_select_app(app_name_) {
+        localStorage.setItem("app_name", app_name_);
+        app_name = app_name_;
+      }
+
+      function update_select_file(index) {
+        localStorage.setItem("file_index", index);
+        file_index = index;
+      }
+
+      $('#select_app').on('change', function() {
+        update_select_app($('#select_app').val());
+      });
+
+      $('#select_log_opt').on('change', function() {
+        update_select_file($('#select_log_opt').val());
+        get_content_default();
+      });
+
+      $('#load_more_up').on('click', function() {
+        if (line_top > 50)
+          line_top -= 50;
+        else if (line_top > 0)
+          line_top = 0;
+
+        get_content(line_top+50);
+      });
+
+      $('#load_more_down').on('click', function() {
+        if (line_top + 50 < total_lines)
+          line_top += 50;
+        else
+          line_top = total_lines - 50;
+        get_content(line_top+50);
+      });
+
+      function tail_is_selected() {
+        if (document.getElementById('is_tail').checked)
+          return true;
+        else return false;
+      }
+
+      function get_content_default() {
+        get_content(0);
+      }
+
+      function tail_start() {
+        tail_interval = setInterval( get_content_default, 10000 );
+        tail_counter_interval = setInterval(every_five, 1000)
+      }
+
+      function tail_stop() {
+        clearInterval(tail_interval);
+        clearInterval(tail_counter_interval)
+        var tail_counter_el = document.getElementById('tail_counter');
+        tail_counter_el.innerHTML = '';
+      }
+
+      $('#is_tail').click(function() {
+        if (tail_is_selected()) {
+          tail_start();
+        } else {
+          tail_stop();
         }
+      });
 
-		$(function() {
-          loadMore();
-          get_max_concurrent();
-        });
+      $(function() {
+        get_app();
+        get_content_default();
+      });
     </script>
 
     {% include "includes/footer.html" %}

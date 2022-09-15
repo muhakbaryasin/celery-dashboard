@@ -51,7 +51,9 @@ def register_restful_api(app):
     api.add_resource(QueryHelperSql, "/v1/query-helper/sql")
     api.add_resource(NotificationFile, "/v1/notifications", "/v1/notifications/<string:notification_name>")
     api.add_resource(NotificationView, "/v1/notifications/<string:notification_name>/view")
-    api.add_resource(LogMan, "/v1/logs/<string:client_name>/<int:index>/<int:line_end_no>")
+    api.add_resource(LogMan, "/v1/logs/<string:client_name>",
+                     "/v1/logs/<string:client_name>/<int:index>/<int:line_end_no>",
+                     "/v1/logs/<string:client_name>/<int:index>")
 
 
 def configure_database(app):

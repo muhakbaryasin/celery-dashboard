@@ -57,19 +57,22 @@ class LogManager(object):
 
     def read_content(self, index, line_end_no=None):
         file_name = self.get_file_name(index)
+        total_lines = self.get_total_lines_of(index)
 
-        if line_end_no is None:
-            line_end_no = self.get_total_lines_of(index)
+        if line_end_no is None or line_end_no == 0:
+            line_end_no = total_lines
 
         lines_start_no = 0 if line_end_no - 50 < 0 else line_end_no - 50
+        print(lines_start_no)
 
         lines = ""
         for x in range(lines_start_no, line_end_no):
             lines += linecache.getline(file_name, x)
-        return lines
+        return file_name, lines, total_lines
 
-    def tail_file(self, index, nlines):
+    def tail_file(self, index, nlines=50):
         file_name = self.get_file_name(index)
+        total_lines = self.get_total_lines_of(index)
 
         with open(file_name) as qfile:
             qfile.seek(0, os.SEEK_END)
@@ -89,4 +92,4 @@ class LogManager(object):
             if position < 0:
                 qfile.seek(0)
 
-            return qfile.read()
+            return file_name, qfile.read(), total_lines

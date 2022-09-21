@@ -116,7 +116,7 @@
           var select_el = document.getElementById('select_app');
           var inner = ``;
           for (var i=0; i<data.data.length; i++) {
-            if (app_name) inner += `<option value="`+ data.data[i] +`" selected="true">` + data.data[i] + `</option>`
+            if (app_name == data.data[i]) inner += `<option value="`+ data.data[i] +`" selected="true">` + data.data[i] + `</option>`
             else inner += `<option value="`+ data.data[i] +`">` + data.data[i] + `</option>`
           }
           select_el.innerHTML = inner;

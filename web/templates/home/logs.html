@@ -72,7 +72,8 @@
           var select_el = document.getElementById('select_app');
           var inner = ``;
           for (var i=0; i<data.data.length; i++) {
-            inner += `<option value="`+ data.data[i] +`">` + data.data[i] + `</option>`
+            if (app_name) inner += `<option value="`+ data.data[i] +`" selected="true">` + data.data[i] + `</option>`
+            else inner += `<option value="`+ data.data[i] +`">` + data.data[i] + `</option>`
           }
           select_el.innerHTML = inner;
         })
@@ -124,6 +125,7 @@
       function update_select_app(app_name_) {
         localStorage.setItem("app_name", app_name_);
         app_name = app_name_;
+        get_content();
       }
 
       function update_select_file(index) {

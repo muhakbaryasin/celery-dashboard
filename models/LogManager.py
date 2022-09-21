@@ -63,11 +63,13 @@ class LogManager(object):
             line_end_no = total_lines
 
         lines_start_no = 0 if line_end_no - 50 < 0 else line_end_no - 50
-        print(lines_start_no)
+        print(lines_start_no, line_end_no)
 
         lines = ""
         for x in range(lines_start_no, line_end_no):
             lines += linecache.getline(file_name, x)
+
+        print("logs", lines)
         return file_name, lines, total_lines
 
     def tail_file(self, index, nlines=50):

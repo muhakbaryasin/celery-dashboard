@@ -79,9 +79,9 @@
       }
 
       function every_five() {
-        tail_counter = (tail_counter + 1) % 10;
+        tail_counter = (tail_counter + 1) % 5;
         var tail_counter_el = document.getElementById('tail_counter');
-        tail_counter_el.innerHTML = (10-tail_counter);
+        tail_counter_el.innerHTML = (5-tail_counter);
       }
 
       function get_content(line_num) {
@@ -105,9 +105,7 @@
               inner += `<option value="`+ i +`">` + data.data.list[i] + `</option>`
           }
 
-          if (data.data.content) {
-            $('#content').val(data.data.content);
-          }
+        $('#content').val(data.data.content);
 
         if (!line_num) {
             if (data.data.total_lines > 50)
@@ -170,7 +168,7 @@
       }
 
       function tail_start() {
-        tail_interval = setInterval( get_content_default, 10000 );
+        tail_interval = setInterval( get_content_default, 5000 );
         tail_counter_interval = setInterval(every_five, 1000)
       }
 

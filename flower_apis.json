@@ -1,4 +1,6 @@
 {
-  "indonesia" : {"url": "http://localhost:5551", "project_base_dir": "/home/go/Documents/master/companies-house-scraper"},
-  "malaysia" : {"url": "http://localhost:5552", "project_base_dir": "/home/go/Documents/master/companies-house-my-scraper"}
+  "indonesia" : {"url": "http://localhost:5551", "project_base_dir": "/home/akbar/Documents/master/companies-house-scraper"},
+  "malaysia" : {"url": "http://localhost:5552", "project_base_dir": "/home/akbar/Documents/master/companies-house-my-scraper"},
+  "ch-ph" : {"url": "http://localhost:5553", "project_base_dir": "/home/akbar/Documents/master/ch-ph-scrapers"},
+  "singapore" : {"url": "http://localhost:5554", "project_base_dir": "/home/akbar/Documents/master/companies-house-sg-scraper"}
 }

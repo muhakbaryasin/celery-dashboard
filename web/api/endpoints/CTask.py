@@ -26,7 +26,9 @@ class CTask(Resource):
 
         for worker_name in registered_tasks.keys():
             for task_name in registered_tasks[worker_name]['registered']:
-                sorted_tasks[task_name] = {
+                friendly_name = task_name.split('.')[-1].replace('_', ' ').title()
+                sorted_tasks[friendly_name] = {
+                    'function_name': task_name,
                     'latest_id': None,
                     'latest_started': None,
                     'latest_status': None,
@@ -36,8 +38,10 @@ class CTask(Resource):
             break
 
         for key in task_history.keys():
-            if task_history[key]['name'] not in sorted_tasks:
-                sorted_tasks[task_history[key]['name']] = {
+            friendly_name = task_history[key]['name'].split('.')[-1].replace('_', ' ').title()
+            if friendly_name not in sorted_tasks:
+                sorted_tasks[friendly_name] = {
+                    'function_name': task_history[key]['name'],
                     'latest_id': task_history[key]['uuid'],
                     'latest_started': task_history[key]['started'],
                     'latest_status': task_history[key]['state'],
@@ -46,17 +50,21 @@ class CTask(Resource):
                 }
                 continue
 
-            sorted_tasks[task_history[key]['name']]['executed_times'] = sorted_tasks[task_history[key]['name']]['executed_times'] + 1
+            sorted_tasks[friendly_name]['executed_times'] = \
+                sorted_tasks[friendly_name]['executed_times'] + 1
 
-            if task_history[key]['runtime'] is not None and sorted_tasks[task_history[key]['name']]['runtime_average'] is not None:
-                sorted_tasks[task_history[key]['name']]['runtime_average'] = (sorted_tasks[task_history[key]['name']]['runtime_average'] + task_history[key]['runtime']) / 2
+            if task_history[key]['runtime'] is not None and sorted_tasks[friendly_name]['runtime_average'] is not None:
+                sorted_tasks[friendly_name]['runtime_average'] = (sorted_tasks[friendly_name]['runtime_average'] +
+                                                                  task_history[key]['runtime']) / 2
             elif task_history[key]['runtime'] is not None:
-                sorted_tasks[task_history[key]['name']]['runtime_average'] = task_history[key]['runtime']
+                sorted_tasks[friendly_name]['runtime_average'] = task_history[key]['runtime']
 
-            if task_history[key]['started'] is not None and (sorted_tasks[task_history[key]['name']]['latest_started'] is None or task_history[key]['started'] > sorted_tasks[task_history[key]['name']]['latest_started']):
-                sorted_tasks[task_history[key]['name']]['latest_id'] = task_history[key]['uuid']
-                sorted_tasks[task_history[key]['name']]['latest_started'] = task_history[key]['started']
-                sorted_tasks[task_history[key]['name']]['latest_status'] = task_history[key]['state']
+            if task_history[key]['started'] is not None \
+                    and (sorted_tasks[friendly_name]['latest_started'] is None
+                         or task_history[key]['started'] > sorted_tasks[friendly_name]['latest_started']):
+                sorted_tasks[friendly_name]['latest_id'] = task_history[key]['uuid']
+                sorted_tasks[friendly_name]['latest_started'] = task_history[key]['started']
+                sorted_tasks[friendly_name]['latest_status'] = task_history[key]['state']
 
         response.data = sorted_tasks
 

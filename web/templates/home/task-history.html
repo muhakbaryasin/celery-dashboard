@@ -81,11 +81,31 @@
           });
       }
 
+      function titleCase(str) {
+        str = str.toLowerCase().split(' ');
+
+        for (var i = 0; i < str.length; i++) {
+          str[i] = str[i].charAt(0).toUpperCase() + str[i].slice(1);
+        }
+
+        return str.join(' ');
+      }
+
+      function setTaskNameTitle(task_name) {
+          let el = document.getElementById("task_name");
+          el.innerHTML = el.innerHTML + task_name
+      }
+
       function loadMore(task_name) {
         $.get( base_url + "/v1/ctask/"+ app_name + "/" + task_name +"/history/" + page, function( data ) {
           let keys = Object.keys(data.data);
 
           for (let i = 0; i < keys.length; i++) {
+            if (i == 0) {
+             let friendly_name = titleCase(data.data[keys[i]].name.split('.').slice(-1)[0].replace('_', ' '));
+             setTaskNameTitle(friendly_name);
+            }
+
             let el = document.getElementById("result");
             el.innerHTML = el.innerHTML +
 `
@@ -107,7 +127,7 @@
     </span>
   </td>
   <td class="budget">
-    `+ new Date(data.data[keys[i]].started) + `
+    `+ new Date(data.data[keys[i]].started * 1000) + `
   </td>
   <td>
     <div class="d-flex align-items-center">
@@ -149,10 +169,8 @@ function(){
 		$(function() {
 		  const queryString = window.location.search;
 		  const urlParams = new URLSearchParams(queryString);
-          const task_name = urlParams.get('task_name')
-          let el = document.getElementById("task_name");
-          el.innerHTML = el.innerHTML + task_name
-          loadMore(task_name)
+		  const task_name = urlParams.get('task_name')
+		  loadMore(task_name)
 
           $("#load_more").click(function() {
             loadMore(task_name)

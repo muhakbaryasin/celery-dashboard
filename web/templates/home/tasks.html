@@ -176,7 +176,7 @@
   </td>
   <th scope="row" style="cursor: pointer;" onClick="(
 function(){
-  window.location.href = '/task-history.html?task_name=`+ keys[i] + `'
+  window.location.href = '/task-history.html?task_name=`+ data.data[keys[i]]['function_name'] + `'
 })();">
     <div class="media align-items-center">
       <div class="media-body">
@@ -194,7 +194,7 @@ function(){
     `+ (data.data[keys[i]].latest_started ? new Date(data.data[keys[i]].latest_started * 1000) : "-----------------") +`
   </td>
   <td>
-    `+ data.data[keys[i]].runtime_average.toFixed(3) +`
+    `+ (data.data[keys[i]].runtime_average ? data.data[keys[i]].runtime_average.toFixed(3) : "-------------") +`
   </td>
   <td align="right">
     `+ data.data[keys[i]].executed_times +`
@@ -209,7 +209,7 @@ function(){
 })();">Terminate</a>
 <a class="dropdown-item" onClick="(
 function(){
-  execute('`+ keys[i] +`');
+  execute('`+ data.data[keys[i]].function_name +`');
 })();">Execute</a>
       </div>
     </div>

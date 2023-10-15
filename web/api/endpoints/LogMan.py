@@ -4,11 +4,11 @@ from models.LogManager import LogManager
 
 
 class LogMan(Resource):
-    def get(self, client_name, index=None, line_end_no=None):
+    def get(self, client_name, type, index=None, line_end_no=None):
         response = BaseResponse()
         response.status = "ok"
         response.message = "success"
-        log_man = LogManager(client_name)
+        log_man = LogManager(client_name, type)
         list_ = log_man.get_list(need_full_path=False)
         data = {'list': list_, 'total_lines': 0}
 

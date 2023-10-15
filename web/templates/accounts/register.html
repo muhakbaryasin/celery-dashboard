@@ -7,73 +7,45 @@
 
 {% block content %}
 
-  <!-- Page content -->
-  <div class="container mt--8 pb-5">
-    <div class="row justify-content-center">
-      <div class="col-lg-5 col-md-7">
-        <div class="card bg-secondary shadow border-0">
-          <div class="card-header bg-transparent pb-5">
+	<!-- Page content -->
+	<div class="row mt-6">
+		<div class="col-xl-4 col-lg-5 col-md-7 mx-auto" >
+			<div class="card z-index-0">
+				<div class="card-header text-center pt-4">
+					<h5>Sign Up</h5>
+					
+					{% if msg %}
+						<div class="alert alert-danger" role="alert">
+							<strong>Oops!</strong> {{ msg | safe }}
+						</div>
+					{% else %}
+						create your credentials
+					{% endif %}
+				</div>
+				
+				<div class="card-body">
+					<form role="form text-left" method="post" action="">
+						{{ form.hidden_tag() }}
 
-            <div class="text-muted text-center mt-2 mb-3">            
-              REGISTER
-              <br />
-              {% if msg %}
-                <span class="text-danger">{{ msg | safe }}</span>
-              {% else %}
-                Add your credentials
-              {% endif %}
-            </div>
-            
-          </div>
-          <div class="card-body px-lg-5 py-lg-5">
-            
-            {% if not success %}
-
-              <form role="form" method="post" action="">
-
-                {{ form.hidden_tag() }}
-
-                <div class="form-group mb-3">
-                  <div class="input-group input-group-alternative">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="ni ni-single-02"></i></span>
-                    </div>
-                    {{ form.username(placeholder="Username",class="form-control") }}
-                  </div>
-                </div>
-                <div class="form-group mb-3">
-                  <div class="input-group input-group-alternative">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="ni ni-email-83"></i></span>
-                    </div>
-                    {{ form.email(placeholder="Email",class="form-control") }}
-                  </div>
-                </div>
-                <div class="form-group">
-                  <div class="input-group input-group-alternative">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="ni ni-lock-circle-open"></i></span>
-                    </div>
-                    {{ form.password(placeholder="Password",class="form-control",type="password") }}
-                  </div>
-                </div>
-
-                <div class="text-center">
-                  <button type="submit" name="register" class="btn btn-primary my-4">Register</button>
-                </div>
-              </form>
-            {% endif %}
-
-          </div>
-        </div>
-        <div class="row mt-3 text-center">
-          <div class="col-12">
-            <a href="{{ url_for('authentication_blueprint.login') }}" class="text-light"><small>Use existing account</small></a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+						<div class="mb-3">
+							{{ form.username(placeholder="Username",class="form-control") }}
+						</div>
+						<div class="mb-3">
+							{{ form.email(placeholder="Email",class="form-control", type="email") }}
+						</div>
+						<div class="mb-3">
+							{{ form.password(placeholder="Password",class="form-control",type="password") }}
+						</div>
+						
+						<div class="text-center">
+							<button type="submit" name="register" class="btn btn-primary w-100 my-4 mb-2">Sign Up</button>
+						</div>
+						<p class="text-sm mt-3 mb-0">Already have an account? <a href="{{ url_for('authentication_blueprint.login') }}" class="text-dark font-weight-bolder">Sign In</a></p>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
 
 {% endblock content %}
 

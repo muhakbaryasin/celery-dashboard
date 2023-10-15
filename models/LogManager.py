@@ -4,8 +4,9 @@ from models.ClientConfigManager import ClientConfigManager
 
 
 class LogManager(object):
-    def __init__(self, client_name):
+    def __init__(self, client_name, type):
         self.client_name = client_name
+        self.type = type
 
     @staticmethod
     def _count_generator(reader):
@@ -38,12 +39,16 @@ class LogManager(object):
         return res
 
     def get_list(self, need_full_path=True):
-        base_dir = ClientConfigManager(self.client_name).project_base_dir
-        res = LogManager.get_list_of_dir(base_dir, ext='.log', need_full_path=need_full_path)
-        dir_ = base_dir + '/conf_xml'
-        res += LogManager.get_list_of_dir(dir_, ext='.xml', need_full_path=need_full_path)
-        dir_ = base_dir + '/temp'
-        res += LogManager.get_list_of_dir(dir_, need_full_path=need_full_path)
+        if self.type == 'default':
+            base_dir = ClientConfigManager(self.client_name).project_base_dir
+            res = LogManager.get_list_of_dir(base_dir, ext='.log', need_full_path=need_full_path)
+            dir_ = base_dir + '/conf_xml'
+            res += LogManager.get_list_of_dir(dir_, ext='.xml', need_full_path=need_full_path)
+            dir_ = base_dir + '/temp'
+            res += LogManager.get_list_of_dir(dir_, need_full_path=need_full_path)
+        else:
+            base_dir = ClientConfigManager(self.client_name).project_base_dir + '/celery_app'
+            res = LogManager.get_list_of_dir(base_dir, ext='.txt', need_full_path=need_full_path)
 
         return res
 

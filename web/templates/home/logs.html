@@ -1,205 +1,211 @@
 {% extends 'layouts/base.html' %}
 
-{% block title %} Tasks {% endblock title %}
+{% block title %} Logs {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
 
 {% block content %}
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
-  <div class="header bg-primary pb-6">
-    <div class="container-fluid">
-      <div class="header-body">
-        <div class="row align-items-center py-4">
-          <div class="col-lg-6 col-7">
-            <h6 class="h2 text-white d-inline-block mb-0">Tables</h6>
-            <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-              <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-                <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
-                <li class="breadcrumb-item"><a href="#">Tables</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Tables</li>
-              </ol>
-            </nav>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Page content -->
-  <div class="container-fluid mt--6">
-    <!-- Dark table -->
-    <div class="row">
-      <div class="col">
-        <div class="card bg-default shadow">
-          <div class="card-header bg-transparent border-0">
-            <h3 class="text-white mb-0">Logs</h3>
-            <br/>
-            <label>App: </label>
-            <select id="select_app" style="width: 130px;">
-            </select>
-            <label>Files </label>
-            <select id="select_log_opt" style="width: 250px;">
-            </select>
-            <label>Tail? </label>
-            <input type="checkbox" id="is_tail" name="is_tail">
-            <span>Will refresh in <span id="tail_counter"></span> second(s)</span>
-            <br/>
-            <br/>
-            <button id="load_more_up">load more</button>
-            <textarea id="content" style="width: 100%; white-space: pre;
-  overflow-wrap: normal;
-  overflow-x: scroll;" rows=51 disabled>
-            </textarea>
-            <button id="load_more_down">load more</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <script>
-      let base_url = window.location.origin;
-      let app_name = localStorage.getItem("app_name") ? localStorage.getItem("app_name") : "indonesia";
-      let file_index = localStorage.getItem("file_index") ? localStorage.getItem("file_index") : 0;
-      let tail_counter = 0;
-      let tail_counter_interval = null;
+	<div class="container-fluid py-4">
+		<div class="row mb-3">
+			<div class="col-lg-12 mb-lg-0 mb-4">
+				<div class="card mb-4">
+					<div class="card-header pb-0">
+						<div class="row">
+							<div class="col-lg-4">
+								<div class="form-group">
+									<label for="" class="text-primary">App Source</label>
+									<select id="select_app" class="form-control form-control-lg">
+									</select>
+								</div>
+							</div>
+							<div class="col-lg-8" >
+								<div class="form-group" style="float: right;" >
+									<label for="" class="text-primary">Files</label>
+									<select id="select_log_opt" class="form-control form-control-lg" style="width: 300px;">
+									</select>
+								</div>
+							</div>
+							
+						</div>
+						<hr class="bg-gradient-dark">
+						<button id="load_more_down" class="btn btn-outline-primary btn-sm mb-0 me-3">load more</button>
+						
+					</div>
+					<div class="card-body pb-0">
+						<textarea id="content" class="form-control" style="width: 100%; white-space: pre;
+								overflow-wrap: normal;
+								overflow-x: scroll;" rows=20 disabled>
+						</textarea>
+						
+						<hr class="bg-gradient-dark">
+						<div class="row">
+							<div class="col-lg-12">
+								<div class="form-group form-check form-switch">
+									<input type="checkbox" class="form-check-input" id="is_tail" name="is_tail">
+            						<span class="text-primary">Load Continuously</span> | Will refresh in <span id="tail_counter"></span> second(s)
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 
-      let line_top = 0;
-      let line_bottom = 0;
-      let total_lines = null;
-      let tail_interval = null;
+		
+		
+		{% include "includes/footer.html" %}
 
-      function get_app() {
-        $('#loader').show();
-        $.get( base_url + "/v1/capps", function( data ) {
-          var select_el = document.getElementById('select_app');
-          var inner = ``;
-          for (var i=0; i<data.data.length; i++) {
-            if (app_name == data.data[i]) inner += `<option value="`+ data.data[i] +`" selected="true">` + data.data[i] + `</option>`
-            else inner += `<option value="`+ data.data[i] +`">` + data.data[i] + `</option>`
-          }
-          select_el.innerHTML = inner;
-        })
-      }
+	</div>
 
-      function every_five() {
-        tail_counter = (tail_counter + 1) % 5;
-        var tail_counter_el = document.getElementById('tail_counter');
-        tail_counter_el.innerHTML = (5-tail_counter);
-      }
-
-      function get_content(line_num) {
-        $('#loader').show();
-        $.get( base_url + "/v1/logs/" + app_name + "/" + file_index + "/" + line_num, function( data ) {
-          tail_counter = 0;
-
-          if (tail_counter_interval) {
-            clearInterval(tail_counter_interval)
-           }
-
-          if (tail_is_selected())
-            tail_counter_interval = setInterval(every_five, 1000)
-
-          var select_el = document.getElementById('select_log_opt');
-          var inner = ``;
-          for (var i=0; i<data.data.list.length; i++) {
-            if (file_index == i)
-              inner += `<option selected="true" value="`+ i +`">` + data.data.list[i] + `</option>`
-            else
-              inner += `<option value="`+ i +`">` + data.data.list[i] + `</option>`
-          }
-
-        $('#content').val(data.data.content);
-
-        if (!line_num) {
-            if (data.data.total_lines > 50)
-              line_top = data.data.total_lines - 50;
-
-            line_bottom = data.data.total_lines;
-            total_lines = data.data.total_lines;
-          }
-
-          select_el.innerHTML = inner;
-
-          $('#loader').hide();
-        })
-      }
-
-      function update_select_app(app_name_) {
-        localStorage.setItem("app_name", app_name_);
-        app_name = app_name_;
-        get_content(0);
-      }
-
-      function update_select_file(index) {
-        localStorage.setItem("file_index", index);
-        file_index = index;
-      }
-
-      $('#select_app').on('change', function() {
-        update_select_app($('#select_app').val());
-      });
-
-      $('#select_log_opt').on('change', function() {
-        update_select_file($('#select_log_opt').val());
-        get_content_default();
-      });
-
-      $('#load_more_up').on('click', function() {
-        if (line_top > 50)
-          line_top -= 50;
-        else if (line_top > 0)
-          line_top = 0;
-
-        get_content(line_top+50);
-      });
-
-      $('#load_more_down').on('click', function() {
-        if (line_top + 50 < total_lines)
-          line_top += 50;
-        else
-          line_top = total_lines - 50;
-        get_content(line_top+50);
-      });
-
-      function tail_is_selected() {
-        if (document.getElementById('is_tail').checked)
-          return true;
-        else return false;
-      }
-
-      function get_content_default() {
-        get_content(0);
-      }
-
-      function tail_start() {
-        tail_interval = setInterval( get_content_default, 5000 );
-        tail_counter_interval = setInterval(every_five, 1000)
-      }
-
-      function tail_stop() {
-        clearInterval(tail_interval);
-        clearInterval(tail_counter_interval)
-        var tail_counter_el = document.getElementById('tail_counter');
-        tail_counter_el.innerHTML = '';
-      }
-
-      $('#is_tail').click(function() {
-        if (tail_is_selected()) {
-          tail_start();
-        } else {
-          tail_stop();
-        }
-      });
-
-      $(function() {
-        get_app();
-        get_content_default();
-      });
-    </script>
-
-    {% include "includes/footer.html" %}
-
-  </div>
 
 {% endblock content %}
 
-<!-- Specific JS goes HERE --> 
-{% block javascripts %}{% endblock javascripts %}
+<!-- Specific JS goes HERE -->
+{% block javascripts %}
+	<script>
+		let base_url = window.location.origin;
+		let app_name = localStorage.getItem("app_name") ? localStorage.getItem("app_name") : "indonesia";
+		let file_index = localStorage.getItem("file_index") ? localStorage.getItem("file_index") : 0;
+		let tail_counter = 0;
+		let tail_counter_interval = null;
+
+		let type = 'default';
+		let line_top = 0;
+		let line_bottom = 0;
+		let total_lines = null;
+		let tail_interval = null;
+
+		function get_app() {
+			$('#loader').show();
+			$.get( base_url + "/v1/capps", function( data ) {
+				var select_el = document.getElementById('select_app');
+				var inner = ``;
+				for (var i=0; i<data.data.length; i++) {
+				if (app_name == data.data[i]) inner += `<option value="`+ data.data[i] +`" selected="true">` + data.data[i] + `</option>`
+				else inner += `<option value="`+ data.data[i] +`">` + data.data[i] + `</option>`
+				}
+				select_el.innerHTML = inner;
+			})
+		}
+
+		function every_five() {
+			tail_counter = (tail_counter + 1) % 5;
+			var tail_counter_el = document.getElementById('tail_counter');
+			tail_counter_el.innerHTML = (5-tail_counter);
+		}
+
+		function get_content(line_num) {
+			$('#loader').show();
+			$.get( base_url + "/v1/logs/" + app_name + "/" + type + "/" + file_index + "/" + line_num, function( data ) {
+				tail_counter = 0;
+
+				if (tail_counter_interval) {
+					clearInterval(tail_counter_interval)
+				}
+
+				if (tail_is_selected())
+					tail_counter_interval = setInterval(every_five, 1000)
+
+					var select_el = document.getElementById('select_log_opt');
+					var inner = ``;
+					for (var i=0; i<data.data.list.length; i++) {
+						if (file_index == i)
+							inner += `<option selected="true" value="`+ i +`">` + data.data.list[i] + `</option>`
+						else
+							inner += `<option value="`+ i +`">` + data.data.list[i] + `</option>`
+					}
+
+			$('#content').val(data.data.content);
+
+			if (!line_num) {
+				if (data.data.total_lines > 50)
+					line_top = data.data.total_lines - 50;
+
+				line_bottom = data.data.total_lines;
+				total_lines = data.data.total_lines;
+				}
+
+				select_el.innerHTML = inner;
+
+				$('#loader').hide();
+			})
+		}
+
+		function update_select_app(app_name_) {
+			localStorage.setItem("app_name", app_name_);
+			app_name = app_name_;
+			get_content(0);
+		}
+
+		function update_select_file(index) {
+			localStorage.setItem("file_index", index);
+			file_index = index;
+		}
+
+		$('#select_app').on('change', function() {
+			update_select_app($('#select_app').val());
+		});
+
+		$('#select_log_opt').on('change', function() {
+			update_select_file($('#select_log_opt').val());
+			get_content_default();
+		});
+
+		$('#load_more_up').on('click', function() {
+			if (line_top > 50)
+				line_top -= 50;
+			else if (line_top > 0)
+				line_top = 0;
+
+			get_content(line_top+50);
+		});
+
+		$('#load_more_down').on('click', function() {
+			if (line_top + 50 < total_lines)
+				line_top += 50;
+			else
+				line_top = total_lines - 50;
+			get_content(line_top+50);
+		});
+
+		function tail_is_selected() {
+		if (document.getElementById('is_tail').checked)
+			return true;
+		else return false;
+		}
+
+		function get_content_default() {
+			get_content(0);
+		}
+
+		function tail_start() {
+			tail_interval = setInterval( get_content_default, 5000 );
+			tail_counter_interval = setInterval(every_five, 1000)
+		}
+
+		function tail_stop() {
+			clearInterval(tail_interval);
+			clearInterval(tail_counter_interval)
+			var tail_counter_el = document.getElementById('tail_counter');
+			tail_counter_el.innerHTML = '';
+		}
+
+		$('#is_tail').click(function() {
+			if (tail_is_selected()) {
+				tail_start();
+			} else {
+				tail_stop();
+			}
+		});
+
+		$(function() {
+			get_app();
+			get_content_default();
+		});
+	</script>
+
+	<script src="/static/assets-v2/js/soft-ui-dashboard.min.js?v=1.0.7"></script>
+{% endblock javascripts %}

@@ -70,7 +70,7 @@ def session_maker(db_config):
 
 @contextmanager
 def session_manager_news():
-    db_config = get_db_config(db='id_news')
+    db_config = get_db_config(db='prod_id_news')
     session = session_maker(db_config)()
 
     try:

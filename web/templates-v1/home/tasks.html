@@ -1,0 +1,258 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Tasks {% endblock title %}
+
+{% block content %}
+  <style>
+    .loader {
+  border: 3px solid #f3f3f3; /* Light grey */
+  border-top: 3px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+  <div class="header bg-primary pb-6">
+    <div class="container-fluid">
+      <div class="header-body">
+        <div class="row align-items-center py-4">
+          <div class="col-lg-6 col-7">
+            <h6 class="h2 text-white d-inline-block mb-0">Tables</h6>
+            <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+              <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                <li class="breadcrumb-item"><a href="#">Tables</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Tables</li>
+              </ol>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page content -->
+  <div class="container-fluid mt--6">
+    <!-- Dark table -->
+    <div class="row">
+      <div class="col">
+        <div class="card bg-default shadow">
+          <div class="card-header bg-transparent border-0">
+            <h3 class="text-white mb-0">Task List</h3>
+            <label>App: </label>
+            <select id="select_app" style="width: 130px;">
+            </select>
+            &nbsp;
+            <label>Max concurrent tasks: </label>
+            <select id="select_max_concurrent_task" style="width: 50px;">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+            <div id="loader" style="float: right;" class="loader"></div>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-items-center table-dark table-flush">
+              <thead class="thead-dark">
+                <tr>
+                  <th scope="col" class="sort" data-sort="no">No.</th>
+                  <th scope="col" class="sort" data-sort="name" style="cursor: pointer;" onclick="sortBy('name')">Name</th>
+                  <th scope="col" class="sort" data-sort="latest_status" style="cursor: pointer;" onclick="sortBy('latest_status')">Latest Status</th>
+                  <th scope="col" class="sort" data-sort="latest_started">Latest Started</th>
+                  <th scope="col" class="sort" data-sort="runtime_average">Runtime (Avg. Sec.)</th>
+                  <th scope="col" class="sort" data-sort="executed_times">Executed (Times)</th>
+                </tr>
+              </thead>
+              <tbody class="list" id="result">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      let base_url = window.location.origin;
+      let app_name = localStorage.getItem("app_name") ? localStorage.getItem("app_name") : "indonesia";
+      let sort_by = localStorage.getItem("sort_by") ? localStorage.getItem("sort_by") : "";
+      let is_desc = localStorage.getItem("is_desc") ? localStorage.getItem("is_desc") : "";
+
+      function sortBy(name) {
+        if (name === 'name')
+            name = ""
+
+        if (name === sort_by) {
+          if (is_desc == true)
+            is_desc = false
+          else is_desc = true
+
+          localStorage.setItem("is_desc", is_desc);
+        } else {
+          sort_by = name
+          localStorage.setItem("sort_by", sort_by);
+        }
+        loadMore();
+      };
+
+      $("#select_app").on('change', function() {
+        update_select_app(this.value)
+      });
+
+      $("#select_max_concurrent_task").on('change', function() {
+        update_max_concurrent(this.value)
+      });
+
+      function get_app() {
+        $('#loader').show();
+        $.get( base_url + "/v1/capps", function( data ) {
+          var select_el = document.getElementById('select_app');
+          var inner = ``;
+          for (var i=0; i<data.data.length; i++) {
+            if (app_name == data.data[i]) inner += `<option value="`+ data.data[i] +`" selected="true">` + data.data[i] + `</option>`
+            else inner += `<option value="`+ data.data[i] +`">` + data.data[i] + `</option>`
+          }
+          select_el.innerHTML = inner;
+        })
+      }
+
+      function update_select_app(app_name_) {
+        localStorage.setItem("app_name", app_name_);
+        app_name = app_name_;
+        loadMore();
+      }
+
+      function update_max_concurrent(number) {
+        $('#loader').show();
+        $.ajax({
+           url: base_url + "/v1/ctask/"+app_name+"/max-concurrent/" + parseInt(number),
+           type: 'PUT',
+           success: function(data) {
+            alert("Max concurrent task is set to " + data.data)
+            $('#loader').hide();
+           }
+          });
+      }
+
+      function get_max_concurrent() {
+        $('#loader').show();
+        $.get( base_url + "/v1/ctask/"+app_name+"/max-concurrent", function( data ) {
+          $("#select_max_concurrent_task").val(data.data);
+        })
+      }
+
+      function getBg(status) {
+        if (status === "STARTED")
+          return "bg-info";
+        if (status === "FAILURE" || status === "REVOKED")
+          return "bg-warning"
+        if (status === "SUCCESS")
+          return "bg-success";
+      }
+
+      function loadMore() {
+        $('#loader').show();
+        $.get(base_url + "/v1/ctask/"+app_name+"?sort_by=" + sort_by + "&is_desc="+is_desc, function( data ) {
+            let el = document.getElementById("result");
+            el.innerHTML = '';
+            let keys = Object.keys(data.data);
+
+            for (let i = 0; i < keys.length; i++) {
+              if (keys[i] === "null")
+                continue
+
+              el.innerHTML = el.innerHTML +
+`
+<tr onMouseOver="this.style.background='#26477e'" onMouseOut="this.style.background='#172b4d'">
+  <td>
+    `+ (i + 1) + `
+  </td>
+  <th scope="row" style="cursor: pointer;" onClick="(
+function(){
+  window.location.href = '/task-history.html?task_name=`+ data.data[keys[i]]['function_name'] + `'
+})();">
+    <div class="media align-items-center">
+      <div class="media-body">
+        <span class="name mb-0 text-sm">`+ keys[i] + `</span>
+      </div>
+    </div>
+  </th>
+  <td>
+    <span class="badge badge-dot mr-4">
+      <i class="`+ getBg(data.data[keys[i]].latest_status) +`"></i>
+      <span class="status">`+ (data.data[keys[i]].latest_status ? data.data[keys[i]].latest_status : "-------------") +`</span>
+    </span>
+  </td>
+  <td>
+    `+ (data.data[keys[i]].latest_started ? new Date(data.data[keys[i]].latest_started * 1000) : "-----------------") +`
+  </td>
+  <td>
+    `+ (data.data[keys[i]].runtime_average ? data.data[keys[i]].runtime_average.toFixed(3) : "-------------") +`
+  </td>
+  <td align="right">
+    `+ data.data[keys[i]].executed_times +`
+    <div class="dropdown">
+      <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i class="fas fa-ellipsis-v"></i>
+      </a>
+      <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
+        <a class="dropdown-item" onClick="(
+function(){
+  terminate('`+ data.data[keys[i]].latest_id +`');
+})();">Terminate</a>
+<a class="dropdown-item" onClick="(
+function(){
+  execute('`+ data.data[keys[i]].function_name +`');
+})();">Execute</a>
+      </div>
+    </div>
+  </td>
+</tr>
+`
+					}
+				$('#loader').hide();
+				});
+			}
+
+		function execute(task_name) {
+          $.ajax({
+           url: base_url + "/v1/ctask/"+app_name+"/" + task_name + "/execute",
+           type: 'POST',
+           success: function(data) {
+            setTimeout(function(){location.reload()}, 2500)
+           }
+          });
+        }
+
+        function terminate(task_id) {
+          $.ajax({
+           url: base_url + "/v1/ctask/" +app_name+ "/" + task_id + "/terminate",
+           type: 'DELETE',
+           success: function(data) {
+            setTimeout(function(){location.reload()}, 2500)
+           }
+          });
+        }
+
+		$(function() {
+          loadMore();
+          get_app();
+          get_max_concurrent();
+        });
+    </script>
+
+    {% include "includes/footer.html" %}
+
+  </div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE -->
+{% block javascripts %}{% endblock javascripts %}

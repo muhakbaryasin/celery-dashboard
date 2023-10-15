@@ -1,0 +1,4 @@
+<?xml version="1.0" ?>
+<root>
+	<max-concurrent-task>1</max-concurrent-task>
+</root>

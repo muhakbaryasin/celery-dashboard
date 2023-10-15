@@ -1,6 +1,9 @@
 {
-  "indonesia" : {"url": "http://localhost:5551", "project_base_dir": "/home/akbar/Documents/master/companies-house-scraper"},
-  "malaysia" : {"url": "http://localhost:5552", "project_base_dir": "/home/akbar/Documents/master/companies-house-my-scraper"},
-  "ch-ph" : {"url": "http://localhost:5553", "project_base_dir": "/home/akbar/Documents/master/ch-ph-scrapers"},
-  "singapore" : {"url": "http://localhost:5554", "project_base_dir": "/home/akbar/Documents/master/companies-house-sg-scraper"}
+  "indonesia" : {"url": "http://localhost:5551", "project_base_dir": "/home/divtech/Development/python-dev/companies-house-scraper"},
+  "malaysia" : {"url": "http://localhost:5552", "project_base_dir": "/home/divtech/Development/python-dev/companies-house-my-scraper"},
+  "ch-ph" : {"url": "http://localhost:5553", "project_base_dir": "/home/divtech/Development/python-dev/ch-ph-scrapers"},
+  "singapore" : {"url": "http://localhost:5554", "project_base_dir": "/home/divtech/Development/python-dev/companies-house-sg-scraper"},
+  "australia" : {"url": "http://localhost:5555", "project_base_dir": "/home/divtech/Development/python-dev/companies-house-au-scraper"},
+  "columbia" : {"url": "http://localhost:5556", "project_base_dir": "/home/divtech/Development/python-dev/companies-house-co-scraper"},
+  "vietnam" : {"url": "http://localhost:5557", "project_base_dir": "/home/divtech/Development/python-dev/companies-house-vn-scraper"}
 }

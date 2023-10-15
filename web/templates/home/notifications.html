@@ -1,452 +1,414 @@
 {% extends 'layouts/base.html' %}
 
-{% block title %} Tasks {% endblock title %}
+{% block title %} Notification {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
 
 {% block content %}
-  <style>
-    .loader {
-  border: 3px solid #f3f3f3; /* Light grey */
-  border-top: 3px solid #3498db; /* Blue */
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  animation: spin 2s linear infinite;
-}
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+	<div class="container-fluid py-4">
+		<div class="row">
+			<div class="col-lg-8">
+				<div class="card bg-default shadow">
+					<div class="card-header bg-transparent border-0">
+						<h3 class="text-primary mb-0">Query Builder</h3>
+						<hr class="bg-gradient-dark"> 
 
-.accordion {
-  background-color: #eee;
-  color: #444;
-  cursor: pointer;
-  padding: 10px 18px;
-  width: 100%;
-  text-align: left;
-  border: none;
-  outline: none;
-  transition: 0.4s;
-}
+						
+						<button class="accordion bg-dark text-white">SQL Helper</button>
+						<div class="panel">
+							<div class="form-group">
+								<label>return</label>
+								<select class="form-control" name="return_type" id="return_type">
+									<option value=0>values</option>
+									<option value=1>count</option>
+								</select>
+							</div>
 
-/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
-.active, .accordion:hover {
-  background-color: #ccc;
-}
+							<div class="form-group">
+								<label>tables</label>
+								<select class="form-control" name="selected_table" id="selected_table">
+								</select>
+							</div>
 
-/* Style the accordion panel. Note: hidden by default */
-.panel {
-  padding: 10px 18px;
-  background-color: white;
-  display: none;
-  overflow: hidden;
-}
+							<div class="form-group">
+								<label>columns</label>
+								<select class="form-control" name="selected_column" id="selected_column" multiple size="2">
+								</select>
+							</div>
 
-.accordion:after {
-  content: '\02795'; /* Unicode character for "plus" sign (+) */
-  font-size: 13px;
-  color: #777;
-  float: right;
-  margin-left: 5px;
-}
+							<div class="form-group">
+								<div class="row">
+									<label>Where clause</label>
+									<div class="col-lg-3">
+										
+										<select class="form-control" name="where_column" id="where_column">
+										</select>
+									</div>
+									<div class="col-lg-3">
+										<select class="form-control" name="where_operator" id="where_operator">
+										</select>
+									</div>
+									<div class="col-lg-2">
+										<input type="text" class="form-control" name="where_value" id="where_value"/>
+									</div>
+									<div class="col-lg-4">
+										<input type="button" class="btn btn-secondary" name="button_and" id="button_and" value="+ AND"/>
+										<input type="button" class="btn btn-secondary" name="button_or" id="button_or" value="+ OR"/>
+									</div>
+								</div>
+							</div>
 
-.active:after {
-  content: "\2796"; /* Unicode character for "minus" sign (-) */
-}
-  </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+							<div class="form-group">
+								<label>order by columns</label>
+								<select class="form-control mb-2" name="order_by_column" id="order_by_column" multiple size="2"></select>
+								<select class="form-control" name="order_by_sort" id="order_by_sort">
+									<option value="0">ascending</option>
+									<option value="1">descending</option>
+								</select>
+							</div>
 
-  <div class="header bg-primary pb-6">
-    <div class="container-fluid">
-      <div class="header-body">
-        <div class="row align-items-center py-4">
-          <div class="col-lg-6 col-7">
-            <h6 class="h2 text-white d-inline-block mb-0">Tables</h6>
-            <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-              <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-                <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
-                <li class="breadcrumb-item"><a href="#">Tables</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Tables</li>
-              </ol>
-            </nav>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+							<div class="form-group">
+								<label>sql generated</label>
+								<textarea class="form-control mb-3" name="sql_helper" id="sql_helper" style="width: 100%;" disabled></textarea>
+								<input type="button" class="btn btn-success"  name="btn_use" id="btn_use" value="Use this SQL"/>
+								<input type="button" class="btn btn-danger" name="btn_reset" id="btn_reset" value="Reset SQL"/>
+							</div>
+							
+						</div>
 
-  <!-- Page content -->
-  <div class="container-fluid mt--6">
-    <!-- Dark table -->
-    <div class="row">
-      <div class="col">
-        <div class="card bg-default shadow">
-          <div class="card-header bg-transparent border-0">
-            <h3 class="text-white mb-0">Notifications</h3>
+						<hr class="bg-gradient-dark"> 
 
-            <div class="table-responsive">
-              <table class="table align-items-center table-dark table-flush">
-                <thead class="thead-dark">
-                  <tr>
-                    <th scope="col" class="sort" data-sort="name">No.</th>
-                    <th scope="col" class="sort" data-sort="name">Name</th>
-                  </tr>
-                  <tr>
-                  </tr>
-                </thead>
-                <tbody class="list" id="result_file_name">
-                </tbody>
-              </table>
-            </div>
 
-            <br/>
-            <button class="accordion">SQL Helper</button>
-            <div class="panel">
-              <label>return</label>
-              <select name="return_type" id="return_type">
-                <option value=0>values</option>
-                <option value=1>count</option>
-              </select>
-              <br/>
-              <label>tables</label>
-              <select name="selected_table" id="selected_table">
-              </select>
-              <label>columns</label>
-              <select name="selected_column" id="selected_column" multiple size="2">
-              </select>
-              <br/>
-              <label>Where clause</label>
-              <select name="where_column" id="where_column">
-              </select>
-              <select name="where_operator" id="where_operator">
-              </select>
-              <input type="text" name="where_value" id="where_value"/>
-              <input type="button"  name="button_and" id="button_and" value="+ AND"/>
-              <input type="button"  name="button_or" id="button_or" value="+ OR"/>
-              <br/>
-              <label>order by</label>
-              <label>columns</label>
-              <select name="order_by_column" id="order_by_column" multiple size="2">
-              </select>
-              <select name="order_by_sort" id="order_by_sort">
-                <option value="0">ascending</option>
-                <option value="1">descending</option>
-              </select>
-              <br/>
-              <textarea name="sql_helper" id="sql_helper" style="width: 100%;" disabled></textarea>
-              <input type="button"  name="btn_use" id="btn_use" value="Use this SQL"/>
-              <input type="button"  name="btn_reset" id="btn_reset" value="Reset SQL"/>
-              &nbsp;
-              &nbsp;
-            </div>
-            <form>
-              <br/>
-              <textarea name="template_notif" id="template_notif" rows=20 cols=125></textarea>
-              <br/>
-              <br/>
-              <input type="text" name="notif_name" id="notif_name" placeholder="notification name"/>&nbsp;
-              <input type="button" name="Clear" id="button_clear" value="Clear text"/>
-              <input type="button" name="Save" id="button_save" value="Save"/>
-              <input type="button" name="View" id="button_view" value="View"/><div id="loader" style="float: right;" class="loader"></div>
-              <br/>
-              <br/>
-              <div id="view_result"></div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-    <script>
-      let base_url = window.location.origin;
+						<form class="mt-3">
+							<label class="text-primary">Result</label>
+							<textarea class="form-control mb-3" name="template_notif" id="template_notif" rows=20 cols=125 style="width: 100%;"></textarea>
+							
+							<input type="text" class="form-control mb-3" name="notif_name" id="notif_name" placeholder="notification name"/>
+							<input type="button" class="btn btn-secondary" name="Clear" id="button_clear" value="Clear text"/>
+							<input type="button" class="btn btn-success" name="Save" id="button_save" value="Save"/>
+							<input type="button" class="btn btn-info" name="View" id="button_view" value="View"/><div id="loader" style="float: right;" class="loader"></div>
+							
+							<div id="view_result"></div>
+						</form>
+					</div>
+				</div>
+			</div>
 
-      function getNotification() {
-        $('#loader').show();
-        $.get(base_url + "/v1/notifications", function( data ) {
-          $('#loader').hide();
-          let keys = Object.keys(data.data);
+			<div class="col-lg-4">
+				<div class="card bg-default shadow">
+					<div class="card-header bg-transparent border-0">
+						<h3 class="text-primary mb-0">Notifications</h3>
+						<hr class="bg-gradient-dark"> 
 
-          for (let i = 0; i < keys.length; i++) {
-            if (keys[i] === "null")
-              continue
+						<ul class="list-group" id="result_file_name"></ul>
+						
 
-            let el = document.getElementById("result_file_name");
+						
+					</div>
+				</div>
+			</div>
+		</div>
 
-            el.innerHTML = el.innerHTML +`
-<tr onMouseOver="this.style.background='#26477e'" onMouseOut="this.style.background='#172b4d'"
-onClick="(
-function(){
-  loadNotification(
-  '`+data.data[i]+`'
-  );
-})();">
-  <td>
-    `+(i + 1) + `
-  </td>
-  <th scope="row">
-    <div class="media align-items-center">
-      <div class="media-body">
-        <span class="name mb-0 text-sm">`+ data.data[i] + `</span>
-      </div>
-    </div>
-  </th>
-</tr>
-`
-          }
-        });
-      }
+		
+		
+		{% include "includes/footer.html" %}
 
-      function loadOptions(data, select_element_id, default_option_text) {
-        let el = document.getElementById(select_element_id);
-        let keys = Object.keys(data);
+	</div>
 
-        if (default_option_text) {
-            el.innerHTML = `<option value=-1>--- ` + default_option_text + ` ---</option>`
-        }
-        else el.innerHTML = ``
-
-        for (let i = 0; i < keys.length; i++) {
-          if (keys[i] === "null")
-            continue
-
-          el.innerHTML += `
-<option value=`+ i +`>` + data[i] + `</option>`
-        }
-      }
-
-      function getTables() {
-        $('#loader').show();
-        $.get(base_url + "/v1/query-helper/tables", function( data ) {
-          $('#loader').hide();
-          loadOptions(data.data, 'selected_table')
-          getFields(0)
-        })
-      }
-
-      function getFields(table_idx) {
-        $.get(base_url + "/v1/query-helper/"+table_idx+"/fields", function( data ) {
-          loadOptions(data.data, 'selected_column')
-          loadOptions(data.data, 'where_column')
-          loadOptions(data.data, 'order_by_column')
-        });
-      }
-
-      function getComparators() {
-        $('#loader').show();
-        $.get(base_url + "/v1/query-helper/comparators", function( data ) {
-          loadOptions(data.data, 'where_operator', 'please select')
-          $('#loader').hide();
-        });
-      }
-
-      let where_clauses = []
-      let current_where_clause = []
-
-      function createParameter() {
-        const table = parseInt($("#selected_table").val());
-        const columns = $('#selected_column').val().map((i) => Number(i));
-        const return_type = parseInt($("#return_type").val());
-        const order_by_columns = $('#order_by_column').val().map((i) => Number(i));
-        const order_by_sort = parseInt($("#order_by_sort").val());
-        const where_column = parseInt($("#where_column").val());
-        const where_value = $("#where_value").val();
-        let where_operator = parseInt($("#where_operator").val());
-
-        if (where_operator > -1) {
-          current_where_clause = [where_column, where_operator, where_value, null]
-        } else {
-          current_where_clause = []
-        }
-
-        return {
-          table: table,
-          columns: columns,
-          return_type: return_type,
-          where_clauses: where_clauses.concat([current_where_clause]),
-          order_by_columns: order_by_columns,
-          order_by_sort: order_by_sort
-        }
-      }
-
-      function createSql() {
-        $('#loader').show();
-        const table = parseInt($("#selected_table").val());
-        const columns = $('#selected_column').val().map((i) => Number(i));
-        const return_type = parseInt($("#return_type").val());
-        const order_by_columns = $('#order_by_column').val().map((i) => Number(i));
-        const order_by_sort = parseInt($("#order_by_sort").val());
-        const where_column = parseInt($("#where_column").val());
-        const where_value = $("#where_value").val();
-        let where_operator = parseInt($("#where_operator").val());
-
-        if (where_operator > -1) {
-          current_where_clause = [where_column, where_operator, where_value, null]
-        } else {
-          current_where_clause = []
-        }
-
-        $.post( base_url + "/v1/query-helper/sql",
-          JSON.stringify(createParameter())
-        ).done(function( data ) {
-            $('#loader').hide();
-            $("#sql_helper").val(data.data);
-        });
-      }
-
-      function loadNotification(notification_name) {
-        $('#loader').show();
-        $.get( base_url + "/v1/notifications/" + notification_name)
-        .done(function( data ) {
-           $('#loader').hide();
-           $('#notif_name').val(notification_name);
-           $('#template_notif').val(data.data);
-        });
-      }
-
-      function saveNotification() {
-        $('#loader').show();
-        const name = $('#notif_name').val() ? $('#notif_name').val() : "Main";
-        const text = $('#template_notif').val();
-
-        $.post( base_url + "/v1/notifications/" + name,
-          JSON.stringify({text: text})
-        ).done(function( data ) {
-           alert('Notification '+name+' saved');
-           $('#loader').hide();
-        });
-      }
-
-      function viewResult() {
-        $('#button_view').prop('disabled', true);
-        $('#loader').show();
-        const name = $('#notif_name').val() ? $('#notif_name').val() : "Main";
-
-        $.get( base_url + "/v1/notifications/" + name + "/view").done(function( data ) {
-           let view_el = document.getElementById("view_result");
-
-            view_el.innerHTML =
-`
-<textarea style="width: 100%;" rows=`+data.data.rows+` disabled>
-`+data.data.text+`
-</textarea>
-`;
-            ;
-            $('#loader').hide();
-            $('#button_view').prop('disabled', false);
-        });
-      }
-
-      $(function() {
-        getNotification();
-        getTables();
-        getComparators();
-
-        var acc = document.getElementsByClassName("accordion");
-var i;
-
-for (i = 0; i < acc.length; i++) {
-  acc[i].addEventListener("click", function() {
-    /* Toggle between adding and removing the "active" class,
-    to highlight the button that controls the panel */
-    this.classList.toggle("active");
-
-    /* Toggle between hiding and showing the active panel */
-    var panel = this.nextElementSibling;
-    if (panel.style.display === "block") {
-      panel.style.display = "none";
-    } else {
-      panel.style.display = "block";
-    }
-  });
-}
-
-        $('#selected_table').on('change', function() {
-          $("#where_operator")[0].selectedIndex = 0;
-          getFields(this.value)
-          createSql()
-        });
-
-        $('#selected_column').on('change', function() {
-          createSql()
-        });
-
-        $('#return_type').on('change', function() {
-          createSql()
-        });
-
-        $('#order_by_column').on('change', function() {
-          createSql()
-        });
-
-        $('#order_by_sort').on('change', function() {
-          createSql()
-        });
-
-        $('#where_operator').on('change', function() {
-          createSql()
-        });
-
-        $('#button_and').on('click', function() {
-          const where_column_ = parseInt($("#where_column").val());
-          const where_value_ = $("#where_value").val();
-          const where_operator_ = parseInt($("#where_operator").val());
-
-          if (where_operator_ > -1) {
-            const current_where_clause_ = [where_column_, where_operator_, where_value_, 1]
-            where_clauses.push(current_where_clause_)
-            $("#where_column")[0].selectedIndex = 0;
-            $("#where_operator")[0].selectedIndex = 0;
-            $("#where_value").val('');
-          }
-        });
-
-        $('#button_or').on('click', function() {
-          const where_column_ = parseInt($("#where_column").val());
-          const where_value_ = $("#where_value").val();
-          const where_operator_ = parseInt($("#where_operator").val());
-
-          if (where_operator_ > -1) {
-            const current_where_clause_ = [where_column_, where_operator_, where_value_, 0]
-            where_clauses.push(current_where_clause_)
-            $("#where_column")[0].selectedIndex = 0;
-            $("#where_operator")[0].selectedIndex = 0;
-            $("#where_value").val('');
-          }
-        });
-
-        $('#btn_use').on('click', function() {
-          var cursorPos = $('#template_notif').prop('selectionStart');
-          var v = $('#template_notif').val();
-          var textBefore = v.substring(0,  cursorPos);
-          var textAfter  = v.substring(cursorPos, v.length);
-
-          $('#template_notif').val(textBefore + '['+JSON.stringify(createParameter())+']' + textAfter);
-        });
-
-        $('#button_save').on('click', function() {
-          saveNotification();
-        });
-
-        $('#button_clear').on('click', function() {
-          $('#template_notif').val('');
-          $('#notif_name').val('');
-
-          let view_el = document.getElementById("view_result");
-          view_el.innerHTML = '';
-        });
-
-        $('#button_view').on('click', function() {
-          viewResult()
-        });
-      });
-
-    </script>
-
-    {% include "includes/footer.html" %}
-
-  </div>
 
 {% endblock content %}
 
 <!-- Specific JS goes HERE -->
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+	<script>
+		let base_url = window.location.origin;
+
+		function getNotification() {
+			$('#loader').show();
+			$.get(base_url + "/v1/notifications", function( data ) {
+				$('#loader').hide();
+				let keys = Object.keys(data.data);
+
+				for (let i = 0; i < keys.length; i++) {
+					if (keys[i] === "null")
+						continue
+
+					let el = document.getElementById("result_file_name");
+
+					el.innerHTML = el.innerHTML +`
+						<li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+							<div class="d-flex flex-column">
+								<h6 class="mb-1 text-dark font-weight-bold text-sm">`+ data.data[i] + `</h6>
+								<span class="text-xs">#query-result</span>
+							</div>
+							<div class="d-flex align-items-center text-sm">
+								<button class="btn btn-primary btn-sm" onClick="(
+											function(){
+												loadNotification('`+ data.data[i] +`');
+											})();"> run</button>
+							</div>
+						</li>
+						`
+				}
+			});
+		}
+
+		function loadOptions(data, select_element_id, default_option_text) {
+			let el = document.getElementById(select_element_id);
+			let keys = Object.keys(data);
+
+			if (default_option_text) {
+					el.innerHTML = `<option value=-1>--- ` + default_option_text + ` ---</option>`
+			}
+			else el.innerHTML = ``
+
+			for (let i = 0; i < keys.length; i++) {
+				if (keys[i] === "null")
+					continue
+
+				el.innerHTML += `
+					<option value=`+ i +`>` + data[i] + `</option>`
+			}
+		}
+
+		function getTables() {
+			$('#loader').show();
+			$.get(base_url + "/v1/query-helper/tables", function( data ) {
+				$('#loader').hide();
+				loadOptions(data.data, 'selected_table')
+				getFields(0)
+			})
+		}
+
+		function getFields(table_idx) {
+			$.get(base_url + "/v1/query-helper/"+table_idx+"/fields", function( data ) {
+				loadOptions(data.data, 'selected_column')
+				loadOptions(data.data, 'where_column')
+				loadOptions(data.data, 'order_by_column')
+			});
+		}
+
+		function getComparators() {
+			$('#loader').show();
+			$.get(base_url + "/v1/query-helper/comparators", function( data ) {
+				loadOptions(data.data, 'where_operator', 'please select')
+				$('#loader').hide();
+			});
+		}
+
+		let where_clauses = []
+		let current_where_clause = []
+
+		function createParameter() {
+			const table = parseInt($("#selected_table").val());
+			const columns = $('#selected_column').val().map((i) => Number(i));
+			const return_type = parseInt($("#return_type").val());
+			const order_by_columns = $('#order_by_column').val().map((i) => Number(i));
+			const order_by_sort = parseInt($("#order_by_sort").val());
+			const where_column = parseInt($("#where_column").val());
+			const where_value = $("#where_value").val();
+			let where_operator = parseInt($("#where_operator").val());
+
+			if (where_operator > -1) {
+				current_where_clause = [where_column, where_operator, where_value, null]
+			} else {
+				current_where_clause = []
+			}
+
+			return {
+				table: table,
+				columns: columns,
+				return_type: return_type,
+				where_clauses: where_clauses.concat([current_where_clause]),
+				order_by_columns: order_by_columns,
+				order_by_sort: order_by_sort
+			}
+		}
+
+		function createSql() {
+			$('#loader').show();
+			const table = parseInt($("#selected_table").val());
+			const columns = $('#selected_column').val().map((i) => Number(i));
+			const return_type = parseInt($("#return_type").val());
+			const order_by_columns = $('#order_by_column').val().map((i) => Number(i));
+			const order_by_sort = parseInt($("#order_by_sort").val());
+			const where_column = parseInt($("#where_column").val());
+			const where_value = $("#where_value").val();
+			let where_operator = parseInt($("#where_operator").val());
+
+			if (where_operator > -1) {
+				current_where_clause = [where_column, where_operator, where_value, null]
+			} else {
+				current_where_clause = []
+			}
+
+			$.post( base_url + "/v1/query-helper/sql",
+				JSON.stringify(createParameter())
+			).done(function( data ) {
+					$('#loader').hide();
+					$("#sql_helper").val(data.data);
+			});
+		}
+
+		function loadNotification(notification_name) {
+			$('#loader').show();
+			$.get( base_url + "/v1/notifications/" + notification_name)
+			.done(function( data ) {
+				$('#loader').hide();
+				$('#notif_name').val(notification_name);
+				$('#template_notif').val(data.data);
+			});
+		}
+
+		function saveNotification() {
+			$('#loader').show();
+			const name = $('#notif_name').val() ? $('#notif_name').val() : "Main";
+			const text = $('#template_notif').val();
+
+			$.post( base_url + "/v1/notifications/" + name,
+				JSON.stringify({text: text})
+			).done(function( data ) {
+				alert('Notification '+name+' saved');
+				$('#loader').hide();
+			});
+		}
+
+		function viewResult() {
+			$('#button_view').prop('disabled', true);
+			$('#loader').show();
+			const name = $('#notif_name').val() ? $('#notif_name').val() : "Main";
+
+			$.get( base_url + "/v1/notifications/" + name + "/view").done(function( data ) {
+				let view_el = document.getElementById("view_result");
+
+					view_el.innerHTML =
+						`
+						<textarea class="form-control" style="width: 100%;" rows=`+data.data.rows+` disabled>
+						`+data.data.text+`
+						</textarea>
+						`;
+					;
+					$('#loader').hide();
+					$('#button_view').prop('disabled', false);
+			});
+		}
+
+		$(function() {
+			getNotification();
+			getTables();
+			getComparators();
+
+			var acc = document.getElementsByClassName("accordion");
+			var i;
+
+			for (i = 0; i < acc.length; i++) {
+				acc[i].addEventListener("click", function() {
+					/* Toggle between adding and removing the "active" class,
+					to highlight the button that controls the panel */
+					this.classList.toggle("active");
+
+					/* Toggle between hiding and showing the active panel */
+					var panel = this.nextElementSibling;
+					if (panel.style.display === "block") {
+						panel.style.display = "none";
+					} else {
+						panel.style.display = "block";
+					}
+				});
+			}
+
+			$('#selected_table').on('change', function() {
+				$("#where_operator")[0].selectedIndex = 0;
+				getFields(this.value)
+				createSql()
+			});
+
+			$('#selected_column').on('change', function() {
+				createSql()
+			});
+
+			$('#return_type').on('change', function() {
+				createSql()
+			});
+
+			$('#order_by_column').on('change', function() {
+				createSql()
+			});
+
+			$('#order_by_sort').on('change', function() {
+				createSql()
+			});
+
+			$('#where_operator').on('change', function() {
+				createSql()
+			});
+
+			$('#button_and').on('click', function() {
+				const where_column_ = parseInt($("#where_column").val());
+				const where_value_ = $("#where_value").val();
+				const where_operator_ = parseInt($("#where_operator").val());
+
+				if (where_operator_ > -1) {
+					const current_where_clause_ = [where_column_, where_operator_, where_value_, 1]
+					where_clauses.push(current_where_clause_)
+					$("#where_column")[0].selectedIndex = 0;
+					$("#where_operator")[0].selectedIndex = 0;
+					$("#where_value").val('');
+				}
+			});
+
+			$('#button_or').on('click', function() {
+				const where_column_ = parseInt($("#where_column").val());
+				const where_value_ = $("#where_value").val();
+				const where_operator_ = parseInt($("#where_operator").val());
+
+				if (where_operator_ > -1) {
+					const current_where_clause_ = [where_column_, where_operator_, where_value_, 0]
+					where_clauses.push(current_where_clause_)
+					$("#where_column")[0].selectedIndex = 0;
+					$("#where_operator")[0].selectedIndex = 0;
+					$("#where_value").val('');
+				}
+			});
+
+			$('#btn_use').on('click', function() {
+				var cursorPos = $('#template_notif').prop('selectionStart');
+				var v = $('#template_notif').val();
+				var textBefore = v.substring(0,  cursorPos);
+				var textAfter  = v.substring(cursorPos, v.length);
+
+				$('#template_notif').val(textBefore + '['+JSON.stringify(createParameter())+']' + textAfter);
+			});
+
+			$('#button_save').on('click', function() {
+				saveNotification();
+			});
+
+			$('#button_clear').on('click', function() {
+				$('#template_notif').val('');
+				$('#notif_name').val('');
+
+				let view_el = document.getElementById("view_result");
+				view_el.innerHTML = '';
+			});
+
+			$('#btn_reset').on('click', function() {
+				$('#sql_helper').val('');
+
+				let view_el = document.getElementById("sql_helper");
+				view_el.innerHTML = '';
+			});
+
+			$('#button_view').on('click', function() {
+				viewResult()
+			});
+		});
+
+	</script>
+	<script src="/static/assets-v2/js/soft-ui-dashboard.min.js?v=1.0.7"></script>
+
+
+{% endblock javascripts %}

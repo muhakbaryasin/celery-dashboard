@@ -3,186 +3,163 @@
 {% block title %} Tasks {% endblock title %}
 
 {% block content %}
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
-  <div class="header bg-primary pb-6">
-    <div class="container-fluid">
-      <div class="header-body">
-        <div class="row align-items-center py-4">
-          <div class="col-lg-6 col-7">
-            <h6 class="h2 text-white d-inline-block mb-0">Tables</h6>
-            <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-              <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-                <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
-                <li class="breadcrumb-item"><a href="#">Tables</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Tables</li>
-              </ol>
-            </nav>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+	<div class="container-fluid py-4">
+		<div class="row mb-3">
+			<div class="col-lg-12 mb-lg-0 mb-4">
+				<div class="card mb-4">
+					<div class="card-header pb-0">
+						<h6>History of Task : <span id="task_name" class="text-primary"></span></h6>
+						<a href="{{ referrer|default('/tasks.html') }}" class="btn btn-secondary btn-sm mb-0 me-3">Back</a>
+						<hr>
+					</div>
+					<div class="card-body px-0 pt-0 pb-2">
+						<div class="table-responsive p-4">
+							<table class="table align-items-center justify-content-center mb-0">
+								<thead>
+									<tr>
+										<th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-2">No</th>
+										<th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-2">ID</th>
+										<th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-2">Status</th>
+										<th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-2">Started</th>
+										<th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-2">Runtime (seconds)</th>
+										<th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-2">Result</th>
+									</tr>
+								</thead>
+								<tbody id="result"></tbody>
+								<tbody>
+									<tr>
+										<td colspan="6" align="center">
+											<hr>
+											<button class="btn btn-outline-primary btn-sm mb-0 me-3" id="load_more">load more</button>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 
-  <!-- Page content -->
-  <div class="container-fluid mt--6">
-    <!-- Dark table -->
-    <div class="row">
-      <div class="col">
-        <div class="card bg-default shadow">
-          <div class="card-header bg-transparent border-0">
-            <h3 class="text-white mb-0">History of task <span id="task_name"></span></h3>
-          </div>
-          <div class="table-responsive">
-            <table class="table align-items-center table-dark table-flush">
-              <thead class="thead-dark">
-                <tr>
-                  <th scope="col" class="sort" data-sort="id">No.</th>
-                  <th scope="col" class="sort" data-sort="id">ID</th>
-                  <th scope="col" class="sort" data-sort="latest_started">Status</th>
-                  <th scope="col" class="sort" data-sort="latest_started">Started</th>
-                  <th scope="col" class="sort" data-sort="runtime_average">Runtime (Seconds)</th>
-                  <th scope="col" class="sort" data-sort="executed_times">Result</th>
-                </tr>
-              </thead>
-              <tbody class="list" id="result">
-              </tbody>
-              <tbody class="list">
-                <tr>
-                  <td colspan="7" align="center"><button id="load_more">load more</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-    <script>
-      let base_url = window.location.origin;
-      let page = 1
-      let app_name = localStorage.getItem("app_name") ? localStorage.getItem("app_name") : "indonesia";
+		{% include "includes/footer.html" %}
 
-      function getBg(status) {
-        if (status === "STARTED")
-          return "bg-info";
-        if (status === "FAILURE" || status === "REVOKED")
-          return "bg-warning"
-        if (status === "SUCCESS")
-          return "bg-success";
-      }
-
-      function terminate(task_id) {
-          $.ajax({
-           url: base_url + "/v1/ctask/"+ app_name + "/" + task_id + "/terminate",
-           type: 'DELETE',
-           success: function(data) {
-            location.reload()
-           }
-          });
-      }
-
-      function titleCase(str) {
-        str = str.toLowerCase().split(' ');
-
-        for (var i = 0; i < str.length; i++) {
-          str[i] = str[i].charAt(0).toUpperCase() + str[i].slice(1);
-        }
-
-        return str.join(' ');
-      }
-
-      function setTaskNameTitle(task_name) {
-          let el = document.getElementById("task_name");
-          el.innerHTML = el.innerHTML + task_name
-      }
-
-      function loadMore(task_name) {
-        $.get( base_url + "/v1/ctask/"+ app_name + "/" + task_name +"/history/" + page, function( data ) {
-          let keys = Object.keys(data.data);
-
-          for (let i = 0; i < keys.length; i++) {
-            if (i == 0) {
-             let friendly_name = titleCase(data.data[keys[i]].name.split('.').slice(-1)[0].replace('_', ' '));
-             setTaskNameTitle(friendly_name);
-            }
-
-            let el = document.getElementById("result");
-            el.innerHTML = el.innerHTML +
-`
-<tr>
-  <td>
-  `+ ((i + 1) + ((page - 1) * 5)) + `
-  </td>
-  <th scope="row">
-    <div class="media align-items-center">
-      <div class="media-body">
-        <span class="name mb-0 text-sm">`+ data.data[keys[i]].uuid +`</span>
-      </div>
-    </div>
-  </th>
-  <td>
-    <span class="badge badge-dot mr-4">
-      <i class="`+ getBg(data.data[keys[i]].state) +`"></i>
-      <span class="status">`+ data.data[keys[i]].state +`</span>
-    </span>
-  </td>
-  <td class="budget">
-    `+ new Date(data.data[keys[i]].started * 1000) + `
-  </td>
-  <td>
-    <div class="d-flex align-items-center">
-    `+ (data.data[keys[i]].runtime ? data.data[keys[i]].runtime.toFixed(3) : "---------") +`
-      <!--
-      <span class="completion mr-2">100%</span>
-      <div>
-        <div class="progress">
-          <div class="progress-bar `+ getBg(data.data[keys[i]].state) +`" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
-        </div>
-      </div>
-    </div>
-    -->
-  </td>
-  <td class="text-right">
-    `+ (data.data[keys[i]].result ? data.data[keys[i]].result : "--------")+`
-    <div class="dropdown">
-      <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <i class="fas fa-ellipsis-v"></i>
-      </a>
-      <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
-        <a class="dropdown-item" onClick="(
-function(){
-  terminate('`+ data.data[keys[i]].uuid +`');
-})();">Terminate</a>
-      </div>
-    </div>
-  </td>
-</tr>
-
-`
-
-					}
-
-					page = page + 1;
-				});
-			}
-
-		$(function() {
-		  const queryString = window.location.search;
-		  const urlParams = new URLSearchParams(queryString);
-		  const task_name = urlParams.get('task_name')
-		  loadMore(task_name)
-
-          $("#load_more").click(function() {
-            loadMore(task_name)
-          });
-        });
-    </script>
-
-    {% include "includes/footer.html" %}
-
-  </div>
+	</div>
 
 {% endblock content %}
 
+
+
 <!-- Specific JS goes HERE -->
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+	<script>
+		let base_url = window.location.origin;
+		let page = 1
+		let app_name = localStorage.getItem("app_name") ? localStorage.getItem("app_name") : "indonesia";
+
+		function getBg(status) {
+			if (status === "STARTED")
+				return "bg-info";
+			if (status === "FAILURE" || status === "REVOKED")
+				return "bg-danger"
+			if (status === "SUCCESS")
+				return "bg-success";
+		}
+
+		function terminate(task_id) {
+			$.ajax({
+			url: base_url + "/v1/ctask/"+ app_name + "/" + task_id + "/terminate",
+			type: 'DELETE',
+			success: function(data) {
+			location.reload()
+			}
+			});
+		}
+
+		function titleCase(str) {
+		str = str.toLowerCase().split(' ');
+
+		for (var i = 0; i < str.length; i++) {
+			str[i] = str[i].charAt(0).toUpperCase() + str[i].slice(1);
+		}
+
+		return str.join(' ');
+		}
+
+		function setTaskNameTitle(task_name) {
+			let el = document.getElementById("task_name");
+			el.innerHTML = el.innerHTML + task_name
+		}
+
+		function loadMore(task_name) {
+			$.get( base_url + "/v1/ctask/"+ app_name + "/" + task_name +"/history/" + page, function( data ) {
+				let keys = Object.keys(data.data);
+
+				for (let i = 0; i < keys.length; i++) {
+					if (i == 0) {
+						let friendly_name = titleCase(data.data[keys[i]].name.split('.').slice(-1)[0].replace('_', ' '));
+						setTaskNameTitle(friendly_name);
+					}
+
+					let el = document.getElementById("result");
+					el.innerHTML = el.innerHTML +
+					`
+					<tr>
+						<td>
+							<div class="d-flex px-2 py-1">
+								<div class="d-flex flex-column justify-content-center">
+									<span class="name mb-0 text-sm">`+ ((i + 1) + ((page - 1) * 5)) + `</span>
+								</div>
+							</div>
+							
+						</td>
+						<td>
+							<div class="media align-items-center">
+								<div class="media-body">
+									<span class="name mb-0 text-sm text-primary"><dt>`+ data.data[keys[i]].uuid +`</dt></span>
+								</div>
+							</div>
+						</td>
+						<td>
+							<span class="badge badge-sm `+getBg(data.data[keys[i]].state)+`">
+								<span class="status">`+ data.data[keys[i]].state +`</span>
+							</span>
+						</td>
+						<td>
+							<span class="name mb-0 text-sm">`+ new Date(data.data[keys[i]].started * 1000) + `</span>
+						</td>
+						<td>
+							<span class="name mb-0 text-sm">
+							`+ (data.data[keys[i]].runtime ? data.data[keys[i]].runtime.toFixed(3) : "---------") +`
+							</span>
+						</td>
+						<td>
+							<span class="name mb-0 text-sm">
+							`+ (data.data[keys[i]].result ? data.data[keys[i]].result : "--------")+`
+							</span>
+						</td>
+					</tr>
+
+					`
+
+				}
+
+				page = page + 1;
+			});
+		}
+
+		$(function() {
+			const queryString = window.location.search;
+			const urlParams = new URLSearchParams(queryString);
+			const task_name = urlParams.get('task_name')
+			loadMore(task_name)
+
+			$("#load_more").click(function() {
+				loadMore(task_name)
+			});
+		});
+  	</script>
+
+	<script src="/static/assets-v2/js/soft-ui-dashboard.min.js?v=1.0.7"></script>
+{% endblock javascripts %}

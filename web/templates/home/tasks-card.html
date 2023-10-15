@@ -1,0 +1,429 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Tasks {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+	<div class="container-fluid py-4">
+		<div class="row mb-3">
+			<div class="col-lg-12 mb-lg-0 mb-4">
+				<div class="card">
+					<div class="card-body p-3">
+						<div class="row">
+							<div class="col-lg-4">
+								<div class="form-group">
+									<label for="" class="text-primary">App Source &nbsp; &nbsp; <div id="loader" style="float: right;" class="loader"></div></label>
+									<select id="select_app" class="form-control form-control-lg">
+									</select>
+								</div>
+							</div>
+
+							<div class="col-lg-12">
+								<button class="accordion bg-dark text-white">Config</button>
+								<div class="panel">
+									<div class="row">
+										<div class="col-md-2">
+											<div class="form-group">
+												<label>Max Concurent</label>
+												<select id="select_max_concurrent_task" class="form-control form-control-lg" >
+													<option>1</option>
+													<option>2</option>
+													<option>3</option>
+													<option>4</option>
+												</select>
+											</div>
+										</div>
+										<div class="col-md-5">
+											<div class="form-group">
+												<label>Whitelist</label>
+												<select class="form-control" name="whitelist_column" id="whitelist_column" multiple size="5">
+												</select>
+											</div>
+											<div class="form-group">
+												<div class="row">
+													<div class="col-md-6">
+														<input type="text" class="form-control" name="whitelist_value" id="whitelist_value"/>
+														<input type="hidden" class="form-control" name="whitelist_value" id="whitelist_file"/>
+													</div>
+													<div class="col-md-6">
+														<input type="button" class="btn btn-secondary" name="wl_button_add" id="wl_button_add" value="+ ADD"/>
+														<input type="button" class="btn btn-danger" name="wl_button_remove" id="wl_button_remove" value="- REMOVE"/>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="col-md-5">
+											<div class="form-group">
+												<label>Blacklist</label>
+												<select class="form-control" name="blacklist_column" id="blacklist_column" multiple size="5">
+												</select>
+											</div>
+											<div class="form-group">
+												<div class="row">
+													<div class="col-md-6">
+														<input type="text" class="form-control" name="blacklist_value" id="blacklist_value"/>
+														<input type="hidden" class="form-control" name="blacklist_value" id="blacklist_file"/>
+													</div>
+													<div class="col-md-6">
+														<input type="button" class="btn btn-secondary" name="bl_button_add" id="bl_button_add" value="+ ADD"/>
+														<input type="button" class="btn btn-danger" name="bl_button_remove" id="bl_button_remove" value="- REMOVE"/>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+
+							</div>
+							<div class="col-lg-12">
+								<hr class="bg-gradient-dark"> 
+								<div class="text-center">
+									<button type="button" class="btn btn-outline-primary">all (<b id="count-result">0</b>)</button>
+									<!-- <button type="button" class="btn bg-gradient-success">Executed</button>
+									<button type="button" class="btn bg-gradient-danger">Terminated</button> -->
+									<a href="/tasks.html" type="button" class="btn btn-danger">Table Mode</a>
+
+								</div>
+							</div>
+						</div>
+
+						
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Task List -->
+		<div class="row mb-3" id="result"></div>
+
+		
+		
+		{% include "includes/footer.html" %}
+
+	</div>
+
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE -->
+{% block javascripts %}
+	<script>
+		let base_url = window.location.origin;
+		let type = 'bw_list';
+		let app_name = localStorage.getItem("app_name") ? localStorage.getItem("app_name") : "indonesia";
+		let file_index = localStorage.getItem("file_index") ? localStorage.getItem("file_index") : 0;
+		let sort_by = localStorage.getItem("sort_by") ? localStorage.getItem("sort_by") : "";
+		let is_desc = localStorage.getItem("is_desc") ? localStorage.getItem("is_desc") : "";
+
+		function sortBy(name) {
+			if (name === 'name')
+				name = ""
+
+			if (name === sort_by) {
+				if (is_desc == true)
+					is_desc = false
+				else is_desc = true
+
+				localStorage.setItem("is_desc", is_desc);
+			} else {
+				sort_by = name
+				localStorage.setItem("sort_by", sort_by);
+			}
+
+			loadMore();
+		};
+
+		function get_app() {
+			$('#loader').show();
+			$.get( base_url + "/v1/capps", function( data ) {
+				var select_el = document.getElementById('select_app');
+				var inner = ``;
+				for (var i=0; i<data.data.length; i++) {
+					if (app_name == data.data[i]) inner += `<option value="`+ data.data[i] +`" selected="true">` + data.data[i] + `</option>`
+					else inner += `<option value="`+ data.data[i] +`">` + data.data[i] + `</option>`
+				}
+
+				select_el.innerHTML = inner;
+			});
+		}
+
+		function update_select_app(app_name_) {
+			localStorage.setItem("app_name", app_name_);
+			app_name = app_name_;
+			loadMore();
+		}
+
+		function update_max_concurrent(number) {
+			$('#loader').show();
+
+			$.ajax({
+				url: base_url + "/v1/ctask/"+app_name+"/max-concurrent/" + parseInt(number),
+				type: 'PUT',
+				success: function(data) {
+					alert("Max concurrent task is set to " + data.data)
+					$('#loader').hide();
+				}
+			});
+		}
+
+		function get_max_concurrent() {
+			$('#loader').show();
+			$.get( base_url + "/v1/ctask/"+app_name+"/max-concurrent", function( data ) {
+				$("#select_max_concurrent_task").val(data.data);
+			})
+		}
+
+		function getBg(status) {
+			if (status === "STARTED")
+				return "bg-info";
+			if (status === "FAILURE" || status === "REVOKED")
+				return "bg-warning"
+			if (status === "SUCCESS")
+				return "bg-success";
+		}
+
+		function execute(task_name) {
+			$.ajax({
+				url: base_url + "/v1/ctask/"+app_name+"/" + task_name + "/execute",
+				type: 'POST',
+				success: function(data) {
+					setTimeout(function(){location.reload()}, 2500)
+				}
+			});
+        }
+
+        function terminate(task_id) {
+			$.ajax({
+				url: base_url + "/v1/ctask/" +app_name+ "/" + task_id + "/terminate",
+				type: 'DELETE',
+				success: function(data) {
+					setTimeout(function(){location.reload()}, 2500)
+				}
+			});
+        }
+
+		function loadMore() {
+			$('#loader').show();
+			$.get(base_url + "/v1/ctask/"+app_name+"?sort_by=" + sort_by + "&is_desc="+is_desc, function( data ) {
+				let el = document.getElementById("result");
+				el.innerHTML = '';
+				let keys = Object.keys(data.data);
+
+				document.getElementById('count-result').innerHTML = keys.length;
+
+				// console.log(keys.length);
+
+				for (let i = 0; i < keys.length; i++) {
+				if (keys[i] === "null")
+					continue
+
+				el.innerHTML = el.innerHTML + `
+				<div class="col-md-4 mb-3">
+					<div class="card bg-cover" style="background-image: url('https://demos.creative-tim.com/soft-ui-design-system-pro/assets/img/curved-images/curved14.jpg')">
+						<div class="card-body z-index-2">
+							<p class="text-white">Task</p>
+
+							<div class="text-center">
+								<h3 class="text-white">`+ keys[i] +`</h3>
+								<span class="text-white text-bold">`+ (data.data[keys[i]].latest_status ? data.data[keys[i]].latest_status : "NOT STARTED") +`</span><br>
+								<span class="text-white" style="font-size: 12px;">Execute : `+ data.data[keys[i]].executed_times +` Times</span>
+
+								<hr style="border: 0.5px solid white">
+								
+								<span class="text-white text-bold">Latest Started</span><br>
+								<span class="text-white" style="font-size: 10px;">`+ (data.data[keys[i]].latest_started ? new Date(data.data[keys[i]].latest_started * 1000) : "-----------------") +`</span>
+
+								
+								<hr style="border: 0.5px solid white">
+
+								<span class="text-white text-bold">Runtime (Avg. sec.)</span><br>
+								<span class="text-white" style="font-size: 12px;">`+ (data.data[keys[i]].runtime_average ? data.data[keys[i]].runtime_average.toFixed(3) : "-------------") +`</span>
+
+
+								<hr style="border: 0.5px solid white">
+								<button type="button" class="btn bg-gradient-success w-45 pull-left" onClick="(
+											function(){
+											execute('`+ data.data[keys[i]].function_name +`');
+											})();">execute
+								</button>
+								<button type="button" class="btn bg-gradient-danger w-45 pull-right" onClick="(
+											function(){
+												terminate('`+ data.data[keys[i]].latest_id +`');
+											})();">terminate
+								</button>
+								<button type="button" class="btn bg-gradient-info w-90" onClick="(
+											function(){
+											window.location.href = '/task-history.html?task_name=`+ data.data[keys[i]]['function_name'] + `'
+											})();">history
+								</button>
+
+							</div>
+							
+						</div>
+						<div class="mask bg-gradient-primary border-radius-lg"></div>
+					</div>
+				</div>
+				`;
+
+
+			
+				}
+
+				$('#loader').hide();
+			});
+		}
+
+
+		function accordion() {
+			var acc = document.getElementsByClassName("accordion");
+			var i;
+
+			for (i = 0; i < acc.length; i++) {
+				acc[i].addEventListener("click", function() {
+					this.classList.toggle("active");
+
+					/* Toggle between hiding and showing the active panel */
+					var panel = this.nextElementSibling;
+					if (panel.style.display === "block") {
+						panel.style.display = "none";
+					} else {
+						panel.style.display = "block";
+					}
+				});
+			}
+		}
+
+		function get_bw_list(id, index) {
+			$.get( base_url + "/v1/logs/" + app_name + "/" + type + "/" + index, function( data ) {
+				// console.log(data);
+				if (id === 'blacklist_column') {
+					document.getElementById('blacklist_file').value = data.data.list[0];
+				} else {
+					document.getElementById('whitelist_file').value = data.data.list[1];
+				}
+
+				var blacklist_el = document.getElementById(id);
+				var inner = ``;
+				const content = data.data.content.split('\n');
+
+				for (var i=0; i < content.length; i++) {
+					if (i == 0) {
+						inner += `<option selected="true" value="`+ content[i] +`">` + content[i] + `</option>`
+					} else {
+						inner += `<option value="`+ content[i] +`">` + content[i] + `</option>`
+					}
+				}
+
+				blacklist_el.innerHTML = inner;
+
+			})
+		}
+
+
+		$("#select_app").on('change', function() {
+			update_select_app(this.value)
+		});
+
+		$("#select_max_concurrent_task").on('change', function() {
+			update_max_concurrent(this.value)
+		});
+
+		$('#blacklist_column').on('change', function() {
+			var valueItem = document.getElementById('blacklist_column').value
+			document.getElementById('blacklist_value').value = valueItem
+		});
+
+		$('#whitelist_column').on('change', function() {
+			var valueItem = document.getElementById('whitelist_column').value
+			document.getElementById('whitelist_value').value = valueItem
+		});
+
+		$('#bl_button_add').on('click', function() {
+			var blacklist_value = document.getElementById('blacklist_value').value
+			var file = document.getElementById('blacklist_file').value
+
+			if (blacklist_value == '') {
+				alert('new blacklist value is empty')
+			} else {
+				$.ajax({
+					url: base_url + "/v1/bwlist/add/"+ app_name + "/" + file + "/" + blacklist_value,
+					type: 'POST',
+					success: function(data) {
+						setTimeout(function(){location.reload()}, 2500)
+					}
+				});
+			}
+		});
+
+		$('#bl_button_remove').on('click', function() {
+			var blacklist_value = document.getElementById('blacklist_value').value
+			var file = document.getElementById('blacklist_file').value
+
+			if (blacklist_value == '') {
+				alert('cannot remove if blacklist value is empty')
+			}  else {
+				$.ajax({
+					url: base_url + "/v1/bwlist/remove/"+ app_name + "/" + file + "/" + blacklist_value,
+					type: 'POST',
+					success: function(data) {
+						setTimeout(function(){location.reload()}, 2500)
+					}
+				});
+			}
+		});
+
+		$('#wl_button_add').on('click', function() {
+			var whitelist_value = document.getElementById('whitelist_value').value
+			var file = document.getElementById('whitelist_file').value
+
+			if (whitelist_value == '') {
+				alert('new whitelist value is empty')
+			} else {
+				
+				$.ajax({
+					url: base_url + "/v1/bwlist/add/"+ app_name + "/" + file + "/" + whitelist_value,
+					type: 'POST',
+					success: function(data) {
+						setTimeout(function(){location.reload()}, 2500)
+					}
+				});
+			}
+		});
+
+		$('#wl_button_remove').on('click', function() {
+			var whitelist_value = document.getElementById('whitelist_value').value
+			var file = document.getElementById('whitelist_file').value
+
+			if (whitelist_value == '') {
+				alert('cannot remove if whitelist value is empty')
+			} else {
+				
+				$.ajax({
+					url: base_url + "/v1/bwlist/remove/"+ app_name + "/" + file + "/" + whitelist_value,
+					type: 'POST',
+					success: function(data) {
+						setTimeout(function(){location.reload()}, 2500)
+					}
+				});
+			}
+		});
+
+		$(function() {
+			loadMore();
+			get_app();
+			get_max_concurrent();
+			accordion();
+
+			get_bw_list('blacklist_column', 0);
+			get_bw_list('whitelist_column', 1);
+        });
+
+
+	</script>
+
+	<script src="/static/assets-v2/js/soft-ui-dashboard.min.js?v=1.0.7"></script>
+
+{% endblock javascripts %}

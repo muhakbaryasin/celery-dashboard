@@ -15,6 +15,8 @@ from web.api.endpoints.QueryHelper import QueryHelperFields, QueryHelperTables, 
 from web.api.endpoints.NotificationFile import NotificationFile
 from web.api.endpoints.NotificationView import NotificationView
 from web.api.endpoints.LogMan import LogMan
+from web.api.endpoints.BWListHandler import BWListHandler
+from web.api.endpoints.Graph import Graph
 
 
 cors = CORS()
@@ -51,9 +53,11 @@ def register_restful_api(app):
     api.add_resource(QueryHelperSql, "/v1/query-helper/sql")
     api.add_resource(NotificationFile, "/v1/notifications", "/v1/notifications/<string:notification_name>")
     api.add_resource(NotificationView, "/v1/notifications/<string:notification_name>/view")
-    api.add_resource(LogMan, "/v1/logs/<string:client_name>",
-                     "/v1/logs/<string:client_name>/<int:index>/<int:line_end_no>",
-                     "/v1/logs/<string:client_name>/<int:index>")
+    api.add_resource(LogMan, "/v1/logs/<string:client_name>/<string:type>",
+                     "/v1/logs/<string:client_name>/<string:type>/<int:index>/<int:line_end_no>",
+                     "/v1/logs/<string:client_name>/<string:type>/<int:index>")
+    api.add_resource(BWListHandler, "/v1/bwlist/<string:action>/<string:client_name>/<string:file>/<string:value>")
+    api.add_resource(Graph, "/v1/graph")
 
 
 def configure_database(app):
